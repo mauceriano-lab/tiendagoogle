@@ -409,6 +409,28 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
+        /* Estilo para el seleccionador de imagen en variantes */
+        .variant-img-picker {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+        .variant-img-picker img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+        }
+        .variant-img-picker img.selected {
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
         .hidden { display: none !important; }
 
         @media (max-width: 768px) {
@@ -490,7 +512,7 @@
                 <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group"><label>Precio</label><input type="number" id="productPrice" step="0.01"></div>
                     <div class="form-group">
-                        <label>Imágenes (Sube de una en una o varias)</label>
+                        <label>Imágenes (Sube primero las imágenes)</label>
                         <input type="file" id="productImageFile" accept="image/*" multiple>
                         <div id="imagesPreview" style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;"></div>
                         <button class="btn btn-secondary" onclick="clearTempImages()" style="margin-top: 1rem; font-size: 0.7rem;">Limpiar Imágenes</button>
@@ -525,7 +547,10 @@
                 <div style="background: #fafafa; padding: 3rem; border-radius: 30px; text-align: center;">
                     <input type="text" id="shareLink" readonly style="text-align: center; margin-bottom: 2rem;">
                     <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 2rem;"></div>
-                    <button class="btn btn-primary" onclick="copyLink()">📋 Copiar Enlace</button>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button class="btn btn-primary" onclick="copyLink()">📋 Copiar Enlace</button>
+                        <button class="btn btn-secondary" onclick="downloadQR()">📥 Descargar QR</button>
+                    </div>
                 </div>
             </div>
 
@@ -563,7 +588,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
-        // Lista exhaustiva de monedas
         const currencies = [
             {s: '€', n: 'EUR - Euro'}, {s: '$', n: 'USD - Dólar'}, {s: '£', n: 'GBP - Libra'}, {s: '¥', n: 'JPY - Yen'},
             {s: 'A$', n: 'AUD - Dólar Aus'}, {s: 'C$', n: 'CAD - Dólar Can'}, {s: 'CHF', n: 'CHF - Franco Suizo'}, {s: '元', n: 'CNY - Yuan'},
@@ -607,8 +631,6 @@
 
         function setupImagePreview() {
             const fileInput = document.getElementById('productImageFile');
-            const previewContainer = document.getElementById('imagesPreview');
-
             fileInput.addEventListener('change', function(e) {
                 Array.from(e.target.files).forEach((file) => {
                     const reader = new FileReader();
@@ -629,6 +651,27 @@
                     <button onclick="removeTempImage(${idx})" style="position:absolute; top:0; right:0; background:red; color:white; border:none; cursor:pointer; font-size:10px; width:15px; height:15px;">✕</button>
                 </div>
             `).join('');
+            
+            // Actualizar los selectores de imágenes en las variantes existentes
+            document.querySelectorAll('.variant-img-picker').forEach(picker => {
+                const groupId = picker.dataset.groupId;
+                updateVariantImgPicker(groupId);
+            });
+        }
+
+        function updateVariantImgPicker(groupId) {
+            const picker = document.querySelector(`#v-group-${groupId} .variant-img-picker`);
+            if(!picker) return;
+            picker.innerHTML = tempProductImages.map((src, idx) => `
+                <img src="${src}" onclick="selectVariantImage(this, '${groupId}')" data-idx="${idx}">
+            `).join('') || '<p style="font-size:0.7rem; color:#999;">Sube imágenes arriba para seleccionar una</p>';
+        }
+
+        function selectVariantImage(el, groupId) {
+            const picker = el.parentElement;
+            picker.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
+            el.classList.add('selected');
+            picker.dataset.selectedIdx = el.dataset.idx;
         }
 
         function removeTempImage(idx) {
@@ -652,27 +695,36 @@
                 <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
                 <div style="display:grid; gap:0.5rem;">
                     <input type="text" placeholder="Opción (XL, Rojo...)" class="v-opt-in">
-                    <label style="font-size:0.7rem">URL Imagen para esta variante (Opcional):</label>
-                    <input type="text" placeholder="https://..." class="v-opt-img">
+                    <label style="font-size:0.7rem">Selecciona imagen de este producto para esta opción:</label>
+                    <div class="variant-img-picker" data-group-id="${id}"></div>
                     <button class="btn btn-secondary" onclick="addVariantOption(${id})">Añadir Opción</button>
                 </div>
                 <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
             `;
             document.getElementById('variantsContainer').appendChild(div);
+            updateVariantImgPicker(id);
         }
 
         function addVariantOption(id) {
             const group = document.getElementById(`v-group-${id}`);
             const input = group.querySelector('.v-opt-in');
-            const imgInput = group.querySelector('.v-opt-img');
+            const picker = group.querySelector('.variant-img-picker');
             const list = group.querySelector('.v-options-list');
+            
             if(!input.value) return;
+            
+            const selectedIdx = picker.dataset.selectedIdx;
+            const imgData = selectedIdx !== undefined ? tempProductImages[selectedIdx] : null;
+
             const tag = document.createElement('div');
-            tag.dataset.img = imgInput.value;
+            tag.dataset.img = imgData || '';
             tag.style.cssText = 'background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;';
-            tag.innerHTML = `<span>${input.value}</span>${imgInput.value ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>`;
+            tag.innerHTML = `<span>${input.value}</span>${imgData ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>`;
             list.appendChild(tag);
-            input.value = ''; imgInput.value = '';
+            
+            input.value = '';
+            picker.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
+            delete picker.dataset.selectedIdx;
         }
 
         function addProduct() {
@@ -763,7 +815,6 @@
             `).join('');
         }
 
-        // Lógica base (Carga, Guardado, Auth) - Manteniendo igual
         function loadData() {
             try {
                 const saved = localStorage.getItem('storeData');
@@ -930,7 +981,19 @@
         function generateShareLink() {
             const url = window.location.origin + window.location.pathname + '?shop=customer';
             document.getElementById('shareLink').value = url;
-            new QRCode(document.getElementById('qrcode'), { text: url, width: 150, height: 150 });
+            new QRCode(document.getElementById('qrcode'), { text: url, width: 250, height: 250 });
+        }
+
+        function downloadQR() {
+            const qrCanvas = document.querySelector('#qrcode canvas');
+            if (qrCanvas) {
+                const link = document.createElement('a');
+                link.download = 'qr-mi-tienda.png';
+                link.href = qrCanvas.toDataURL();
+                link.click();
+            } else {
+                showAlert('⚠️ Primero genera el enlace', 'info');
+            }
         }
 
         function copyLink() {
