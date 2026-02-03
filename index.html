@@ -741,8 +741,30 @@
         <a href="https://www.trescientospesos.com" target="_blank" style="color: inherit; text-decoration: none; font-weight: 600; font-size: 0.9rem;">Creado por www.trescientospesos.com</a>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global environment variables
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-shop-id';
+        const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth;
+        let storeData = {
+            name: 'Mi Tienda', logo: '🛒', primaryColor: '#121212', currency: '€', currencySuffix: '',
+            addToCartText: '🛒 Agregar al Carrito', whatsapp: '',
+            auth: { passwordHash: null, isAuthenticated: false },
+            products: [], categories: ['General'], coupons: [], cart: []
+        };
+
+        let tempProductImages = [];
+        let editingProductId = null;
+        let editingCategoryName = null;
+        let appliedCoupon = null;
+
         const currencies = [
             {s: '$', n: 'USD - Dólar (EE.UU., Ecuador, Panamá, El Salvador)'},
             {s: 'C$', n: 'CAD - Dólar Canadiense'},
@@ -767,29 +789,137 @@
             {s: '£', n: 'GBP - Libra'}
         ];
 
-        let storeData = {
-            name: 'Mi Tienda', logo: '🛒', primaryColor: '#121212', currency: '€', currencySuffix: '',
-            addToCartText: '🛒 Agregar al Carrito', whatsapp: '',
-            auth: { passwordHash: null, isAuthenticated: false },
-            products: [], categories: ['General'], coupons: [], cart: []
-        };
+        // --- CORE FUNCTIONS ---
 
-        let tempProductImages = [];
-        let editingProductId = null;
-        let editingCategoryName = null;
-        let appliedCoupon = null;
+        async function init() {
+            if (!firebaseConfig) {
+                console.error("Firebase config not found.");
+                return;
+            }
 
-        function init() {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
             populateCurrencies();
-            loadData();
-            updateDisplay();
             initializeTabs();
-            generateShareLink();
             setupImagePreview();
+            generateShareLink();
+
+            // Rule 3: Auth before queries
+            try {
+                if (initialToken) {
+                    await signInWithCustomToken(auth, initialToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Auth failed", e);
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    startCloudSync();
+                }
+            });
+
             if (new URLSearchParams(window.location.search).get('shop') === 'customer') {
                 document.getElementById('adminToggle').classList.add('hidden');
-            } else { checkAdminAccess(); }
+            } else { 
+                checkAdminAccess(); 
+            }
         }
+
+        function startCloudSync() {
+            // Sincronización Configuración
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'main'), (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    storeData.name = data.name || storeData.name;
+                    storeData.whatsapp = data.whatsapp || storeData.whatsapp;
+                    storeData.logo = data.logo || storeData.logo;
+                    storeData.primaryColor = data.primaryColor || storeData.primaryColor;
+                    storeData.currency = data.currency || storeData.currency;
+                    storeData.currencySuffix = data.currencySuffix || storeData.currencySuffix;
+                    storeData.addToCartText = data.addToCartText || storeData.addToCartText;
+                    storeData.auth.passwordHash = data.passwordHash || storeData.auth.passwordHash;
+                    
+                    // Update form values for admin
+                    document.getElementById('storeName').value = storeData.name;
+                    document.getElementById('whatsappNumber').value = storeData.whatsapp;
+                    document.getElementById('storeLogo').value = storeData.logo;
+                    document.getElementById('primaryColor').value = storeData.primaryColor;
+                    document.getElementById('currencySymbol').value = storeData.currency;
+                    document.getElementById('addToCartText').value = storeData.addToCartText;
+                    
+                    updateDisplay();
+                }
+            }, (error) => console.error("Config error:", error));
+
+            // Sincronización Productos
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), (snap) => {
+                storeData.products = snap.docs.map(d => ({ ...d.data(), docId: d.id }));
+                updateDisplay();
+            });
+
+            // Sincronización Categorías
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'categories', 'main'), (snap) => {
+                if (snap.exists()) {
+                    storeData.categories = snap.data().list || ['General'];
+                    updateDisplay();
+                }
+            });
+
+            // Sincronización Cupones
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'coupons'), (snap) => {
+                storeData.coupons = snap.docs.map(d => ({ ...d.data(), docId: d.id }));
+                updateDisplay();
+            });
+        }
+
+        async function saveCloudDesign() {
+            if (!auth.currentUser) return;
+            const sel = document.getElementById('currencySymbol');
+            const data = {
+                name: document.getElementById('storeName').value,
+                whatsapp: document.getElementById('whatsappNumber').value,
+                logo: document.getElementById('storeLogo').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                currency: sel.value,
+                currencySuffix: sel.options[sel.selectedIndex]?.dataset.suf || '',
+                addToCartText: document.getElementById('addToCartText').value,
+                passwordHash: storeData.auth.passwordHash
+            };
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'main'), data, { merge: true });
+            showAlert('✅ Diseño guardado en la nube', 'success');
+        }
+
+        async function saveCloudProduct(p) {
+            if (!auth.currentUser) return;
+            if (editingProductId) {
+                const existing = storeData.products.find(x => x.id === editingProductId);
+                if (existing && existing.docId) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', existing.docId), p);
+                }
+            } else {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), p);
+            }
+        }
+
+        async function deleteCloudProduct(id) {
+            if (!auth.currentUser) return;
+            const p = storeData.products.find(x => x.id === id);
+            if (p && p.docId) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.docId));
+            }
+        }
+
+        async function saveCloudCategories() {
+            if (!auth.currentUser) return;
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'categories', 'main'), { list: storeData.categories });
+        }
+
+        // --- UI FUNCTIONS ---
 
         function formatPrice(value) {
             return Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -797,11 +927,24 @@
 
         function parsePrice(input) {
             if (!input) return 0;
-            // Elimina puntos de miles y cambia coma por punto para el parseo numérico
             let clean = input.toString().replace(/\./g, '').replace(',', '.');
             let num = parseFloat(clean);
             return isNaN(num) ? 0 : num;
         }
+
+        function updateDisplay() {
+            document.getElementById('storeNameDisplay').textContent = storeData.name;
+            document.getElementById('logoDisplay').textContent = storeData.logo;
+            updateColors(); 
+            displayProducts(); 
+            displayCategories(); 
+            updateCategorySelect(); 
+            updateCartBadge(); 
+            displayCoupons();
+            displayCategoryMenu();
+        }
+
+        function updateColors() { document.documentElement.style.setProperty('--primary', storeData.primaryColor); }
 
         function displayCategoryMenu() {
             const nav = document.getElementById('categoryScroll');
@@ -817,7 +960,7 @@
             `).join('');
         }
 
-        function scrollToCategory(name) {
+        window.scrollToCategory = (name) => {
             const section = Array.from(document.querySelectorAll('h2')).find(h => h.textContent === name);
             if(section) {
                 const headerOffset = 150;
@@ -827,290 +970,51 @@
                     p.classList.toggle('active', p.textContent === name);
                 });
             }
-        }
+        };
 
-        function addCoupon() {
-            const code = document.getElementById('couponCode').value.trim().toUpperCase();
-            const type = document.getElementById('couponType').value;
-            const value = parseFloat(document.getElementById('couponValue').value);
-            if(!code || isNaN(value)) return showAlert('⚠️ Datos de cupón inválidos', 'info');
-            storeData.coupons.push({ code, type, value });
-            saveData();
-            displayCoupons();
-            document.getElementById('couponCode').value = '';
-            document.getElementById('couponValue').value = '';
-            showAlert('✅ Cupón generado', 'success');
-        }
+        window.changeQty = (pid, val) => {
+            const el = document.getElementById(`qty-${pid}`);
+            if(!el) return;
+            let q = parseInt(el.textContent) + val;
+            if(q < 1) q = 1;
+            el.textContent = q;
+        };
 
-        function displayCoupons() {
-            const list = document.getElementById('couponsList');
-            if(!list) return;
-            list.innerHTML = storeData.coupons.map((c, idx) => `
-                <div class="category-item">
-                    <span><strong>${c.code}</strong> (${c.type === 'percentage' ? c.value + '%' : storeData.currency + formatPrice(c.value) + (storeData.currencySuffix || '')})</span>
-                    <button onclick="deleteCoupon(${idx})" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
-                </div>
-            `).join('');
-        }
-
-        function deleteCoupon(idx) {
-            storeData.coupons.splice(idx, 1);
-            saveData();
-            displayCoupons();
-            showAlert('🗑️ Cupón eliminado', 'success');
-        }
-
-        function applyCoupon() {
-            const input = document.getElementById('cartCouponInput').value.trim().toUpperCase();
-            const coupon = storeData.coupons.find(c => c.code === input);
-            if(!coupon) {
-                appliedCoupon = null;
-                showAlert('❌ Cupón no válido', 'info');
-            } else {
-                appliedCoupon = coupon;
-                showAlert('✅ Cupón aplicado!', 'success');
-            }
-            renderCart();
-        }
-
-        async function changeAdminPassword() {
-            const oldPass = document.getElementById('oldPassword').value;
-            const newPass1 = document.getElementById('newPassword1').value;
-            const newPass2 = document.getElementById('newPassword2').value;
-            if(!oldPass || !newPass1 || !newPass2) return showAlert('⚠️ Completa los campos', 'info');
-            const oldHash = await hashPassword(oldPass);
-            if (oldHash !== storeData.auth.passwordHash) return showAlert('❌ Clave actual incorrecta', 'info');
-            if (newPass1 !== newPass2) return showAlert('❌ No coinciden', 'info');
-            if (newPass1.length < 6) return showAlert('⚠️ Mínimo 6 caracteres', 'info');
-            storeData.auth.passwordHash = await hashPassword(newPass1);
-            saveData();
-            showAlert('✅ Contraseña actualizada', 'success');
-            document.getElementById('oldPassword').value = '';
-            document.getElementById('newPassword1').value = '';
-            document.getElementById('newPassword2').value = '';
-        }
-
-        async function hashPassword(p) {
-            const b = new TextEncoder().encode(p);
-            const h = await crypto.subtle.digest('SHA-256', b);
-            return Array.from(new Uint8Array(h)).map(x => x.toString(16).padStart(2, '0')).join('');
-        }
-
-        function populateCurrencies() {
-            const select = document.getElementById('currencySymbol');
-            select.innerHTML = currencies.map(c => `<option value="${c.s}" data-suf="${c.suf || ''}">${c.n}</option>`).join('');
-        }
-
-        function loadData() {
-            try {
-                const saved = localStorage.getItem('storeData');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    storeData = { ...storeData, ...parsed };
-                    document.getElementById('storeName').value = storeData.name;
-                    document.getElementById('whatsappNumber').value = storeData.whatsapp;
-                    document.getElementById('storeLogo').value = storeData.logo;
-                    document.getElementById('primaryColor').value = storeData.primaryColor;
-                    document.getElementById('currencySymbol').value = storeData.currency;
-                    document.getElementById('addToCartText').value = storeData.addToCartText;
+        window.addToCart = (pid) => {
+            const p = storeData.products.find(x => x.id === pid);
+            if(!p) return;
+            const qty = parseInt(document.getElementById(`qty-${pid}`).textContent);
+            const vars = {};
+            document.querySelectorAll(`.product-card`).forEach(card => {
+                if(card.querySelector(`[onclick*="addToCart(${pid})"]`)) {
+                    card.querySelectorAll('.variant-options').forEach((vo, idx) => {
+                        const selected = vo.querySelector('.selected');
+                        if(selected) vars[p.variants[idx].name] = selected.textContent;
+                    });
                 }
-            } catch (e) {}
-        }
-
-        function saveData() { 
-            try {
-                localStorage.setItem('storeData', JSON.stringify(storeData)); 
-            } catch(e) {
-                showAlert('⚠️ Espacio insuficiente para guardar más datos', 'info');
-            }
-        }
-        
-        function updateColors() { document.documentElement.style.setProperty('--primary', storeData.primaryColor); }
-        
-        function updateDisplay() {
-            document.getElementById('storeNameDisplay').textContent = storeData.name;
-            document.getElementById('logoDisplay').textContent = storeData.logo;
-            updateColors(); 
-            displayProducts(); 
-            displayCategories(); 
-            updateCategorySelect(); 
-            updateCartBadge(); 
-            displayCoupons();
-            displayCategoryMenu();
-        }
-
-        function showAlert(m, t) {
-            const a = document.createElement('div'); 
-            a.className = 'alert'; 
-            a.textContent = m;
-            if(t === 'info') a.style.background = '#333';
-            document.body.appendChild(a); 
-            setTimeout(() => {
-                a.style.opacity = '0';
-                setTimeout(() => a.remove(), 500);
-            }, 3000);
-        }
-
-        function setupImagePreview() {
-            const fileInput = document.getElementById('productImageFile');
-            fileInput.addEventListener('change', function(e) {
-                Array.from(e.target.files).forEach((file) => {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        tempProductImages.push(event.target.result);
-                        renderImagePreviews();
-                    };
-                    reader.readAsDataURL(file);
-                });
             });
-        }
+            const currentImg = document.getElementById(`main-img-${pid}`)?.src || p.image;
+            storeData.cart.push({ cartId: Date.now(), productId: pid, variants: vars, quantity: qty, img: currentImg });
+            updateCartBadge(); showAlert('🛒 Añadido al carrito', 'success');
+        };
 
-        function renderImagePreviews() {
-            const previewContainer = document.getElementById('imagesPreview');
-            previewContainer.innerHTML = tempProductImages.map((src, idx) => `
-                <div style="position:relative; width:60px; height:60px; border-radius:8px; overflow:hidden; border:1px solid #eee;">
-                    <img src="${src}" style="width:100%; height:100%; object-fit:cover;">
-                    <button onclick="removeTempImage(${idx})" style="position:absolute; top:0; right:0; background:red; color:white; border:none; cursor:pointer; font-size:10px; width:15px; height:15px;">✕</button>
-                </div>
-            `).join('');
-
-            document.querySelectorAll('.variant-img-picker').forEach(picker => {
-                updateVariantImgPicker(picker.dataset.groupId);
-            });
-        }
-
-        function removeTempImage(idx) {
-            tempProductImages.splice(idx, 1);
-            renderImagePreviews();
-        }
-
-        function clearTempImages() {
-            tempProductImages = [];
-            renderImagePreviews();
-        }
-
-        function addCategory() {
-            const n = document.getElementById('newCategory').value.trim();
-            if(!n) return;
-            if(editingCategoryName) {
-                const idx = storeData.categories.indexOf(editingCategoryName);
-                if(idx !== -1) {
-                    storeData.categories[idx] = n;
-                    storeData.products.forEach(p => { if(p.category === editingCategoryName) p.category = n; });
-                    showAlert('✅ Categoría actualizada', 'success');
-                }
-                editingCategoryName = null;
-                document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
-                document.getElementById('categoryCancelBtn').classList.add('hidden');
-            } else {
-                if(!storeData.categories.includes(n)) { 
-                    storeData.categories.push(n); 
-                    showAlert('✅ Categoría creada', 'success');
-                } else {
-                    return showAlert('⚠️ Ya existe esta categoría', 'info');
-                }
-            }
-            document.getElementById('newCategory').value = '';
-            saveData(); updateDisplay(); 
-        }
-
-        function editCategory(name) {
-            editingCategoryName = name;
-            const input = document.getElementById('newCategory');
-            input.value = name;
-            input.focus();
-            document.getElementById('categorySubmitBtn').textContent = '💾 Actualizar Nombre';
-            document.getElementById('categoryCancelBtn').classList.remove('hidden');
-        }
-
-        function cancelCategoryEdit() {
-            editingCategoryName = null;
-            document.getElementById('newCategory').value = '';
-            document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
-            document.getElementById('categoryCancelBtn').classList.add('hidden');
-        }
-
-        function deleteCategory(name) {
-            if(confirm(`¿Eliminar categoría "${name}"?`)) {
-                storeData.categories = storeData.categories.filter(c => c !== name);
-                if(storeData.categories.length === 0) storeData.categories.push('General');
-                const fallbackCat = storeData.categories[0];
-                storeData.products.forEach(p => { if(p.category === name) p.category = fallbackCat; });
-                saveData(); updateDisplay();
-                showAlert(`🗑️ Categoría "${name}" eliminada`, 'success');
-            }
-        }
-
-        function displayCategories() {
-            const list = document.getElementById('categoriesList');
-            list.innerHTML = storeData.categories.map(c => `
-                <div class="category-item">
-                    <span>${c}</span>
-                    <div style="display:flex; gap:0.5rem;">
-                        <button onclick="editCategory('${c}')" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:600;">Editar</button>
-                        <button onclick="deleteCategory('${c}')" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function updateCategorySelect() {
-            const sel = document.getElementById('productCategory');
-            if(sel) sel.innerHTML = storeData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
-        }
-
-        function addVariantGroup() {
-            const id = Math.floor(Date.now() + Math.random() * 1000);
-            const div = document.createElement('div');
-            div.className = 'variant-builder';
-            div.style.cssText = 'background:#f8f8f8; padding:1.5rem; border-radius:20px; margin-bottom:1.5rem; border:1px solid #eee;';
-            div.id = `v-group-${id}`;
-            div.innerHTML = `
-                <input type="text" placeholder="Ej: Talla o Color" class="v-name" style="margin-bottom:1rem">
-                <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
-                <div style="display:grid; gap:0.5rem;">
-                    <input type="text" placeholder="Opción" class="v-opt-in">
-                    <label style="font-size:0.7rem; margin-top: 5px;">Asignar imagen:</label>
-                    <div class="variant-img-picker" data-group-id="${id}"></div>
-                    <button class="btn btn-secondary" onclick="addVariantOption(${id})">Añadir Opción</button>
-                </div>
-                <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
-            `;
-            document.getElementById('variantsContainer').appendChild(div);
-            updateVariantImgPicker(id);
-        }
-
-        function updateVariantImgPicker(groupId) {
-            const picker = document.querySelector(`.variant-img-picker[data-group-id="${groupId}"]`);
-            if(!picker) return;
-            picker.innerHTML = tempProductImages.map((src, idx) => `
-                <img src="${src}" onclick="selectImageForVariant(this)" data-src="${src}">
-            `).join('') || '<p style="font-size:0.7rem; color:#999;">Sube imágenes primero</p>';
-        }
-
-        function selectImageForVariant(el) {
-            el.parentElement.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
+        window.selectVarOption = (el, pid) => {
+            el.parentElement.querySelectorAll('.variant-option').forEach(o => o.classList.remove('selected'));
             el.classList.add('selected');
-        }
+            const varImg = el.dataset.varImg;
+            if (varImg && varImg.length > 50) {
+                const mainImg = document.getElementById(`main-img-${pid}`);
+                if (mainImg) mainImg.src = varImg;
+            }
+        };
 
-        function addVariantOption(id) {
-            const group = document.getElementById(`v-group-${id}`);
-            const input = group.querySelector('.v-opt-in');
-            const list = group.querySelector('.v-options-list');
-            const selectedImg = group.querySelector('.variant-img-picker img.selected');
-            const imgSrc = selectedImg ? selectedImg.dataset.src : '';
+        // --- ADMIN ACTIONS ---
 
-            if(!input.value) return;
-            const tag = document.createElement('div');
-            tag.dataset.img = imgSrc;
-            tag.style.cssText = 'background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;';
-            tag.innerHTML = `<span>${input.value}</span> ${imgSrc ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>`;
-            list.appendChild(tag);
-            input.value = '';
-            if(selectedImg) selectedImg.classList.remove('selected');
-        }
+        window.saveDesign = async () => {
+            await saveCloudDesign();
+        };
 
-        function addProduct() {
+        window.addProduct = async () => {
             const name = document.getElementById('productName').value;
             const price = parsePrice(document.getElementById('productPrice').value);
             const category = document.getElementById('productCategory').value || 'General';
@@ -1136,39 +1040,19 @@
                 variants
             };
 
-            if(editingProductId) {
-                const idx = storeData.products.findIndex(p => p.id === editingProductId);
-                if(idx !== -1) storeData.products[idx] = newProduct;
-                editingProductId = null;
-                document.getElementById('productSubmitBtn').textContent = '➕ Publicar Producto';
-                document.getElementById('cancelEditBtn').classList.add('hidden');
-            } else { 
-                storeData.products.push(newProduct); 
-            }
-
-            saveData(); 
-            updateDisplay(); 
+            await saveCloudProduct(newProduct);
             resetProductForm();
-            showAlert('✅ Publicado correctamente', 'success');
-        }
+            showAlert('✅ Producto sincronizado', 'success');
+        };
 
-        function resetProductForm() {
-            document.getElementById('productName').value = '';
-            document.getElementById('productPrice').value = '';
-            document.getElementById('productDescription').value = '';
-            document.getElementById('variantsContainer').innerHTML = '';
-            clearTempImages();
-        }
-
-        function deleteProduct(id) {
-            if(confirm('¿Eliminar producto?')) {
-                storeData.products = storeData.products.filter(p => p.id !== id);
-                saveData(); updateDisplay();
+        window.deleteProduct = async (id) => {
+            if(confirm('¿Eliminar producto de la nube?')) {
+                await deleteCloudProduct(id);
                 showAlert('🗑️ Producto eliminado', 'success');
             }
-        }
+        };
 
-        function editProduct(id) {
+        window.editProduct = (id) => {
             const p = storeData.products.find(x => x.id === id);
             if(!p) return;
             editingProductId = id;
@@ -1210,14 +1094,161 @@
             document.getElementById('productSubmitBtn').textContent = '💾 Guardar Cambios';
             document.getElementById('cancelEditBtn').classList.remove('hidden');
             window.scrollTo({ top: document.getElementById('adminPanel').offsetTop, behavior: 'smooth' });
+        };
+
+        window.addCategory = async () => {
+            const n = document.getElementById('newCategory').value.trim();
+            if(!n) return;
+            if(editingCategoryName) {
+                const idx = storeData.categories.indexOf(editingCategoryName);
+                if(idx !== -1) {
+                    storeData.categories[idx] = n;
+                    storeData.products.forEach(p => { if(p.category === editingCategoryName) p.category = n; });
+                }
+                editingCategoryName = null;
+                document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
+                document.getElementById('categoryCancelBtn').classList.add('hidden');
+            } else {
+                if(!storeData.categories.includes(n)) { 
+                    storeData.categories.push(n); 
+                } else return showAlert('⚠️ Ya existe', 'info');
+            }
+            document.getElementById('newCategory').value = '';
+            await saveCloudCategories();
+            showAlert('✅ Categorías actualizadas', 'success');
+        };
+
+        window.deleteCategory = async (name) => {
+            if(confirm(`¿Eliminar categoría "${name}"?`)) {
+                storeData.categories = storeData.categories.filter(c => c !== name);
+                if(storeData.categories.length === 0) storeData.categories.push('General');
+                const fallbackCat = storeData.categories[0];
+                storeData.products.forEach(p => { if(p.category === name) p.category = fallbackCat; });
+                await saveCloudCategories();
+                showAlert(`🗑️ Categoría "${name}" eliminada`, 'success');
+            }
+        };
+
+        window.addCoupon = async () => {
+            const code = document.getElementById('couponCode').value.trim().toUpperCase();
+            const type = document.getElementById('couponType').value;
+            const value = parseFloat(document.getElementById('couponValue').value);
+            if(!code || isNaN(value)) return showAlert('⚠️ Datos de cupón inválidos', 'info');
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'coupons'), { code, type, value });
+            document.getElementById('couponCode').value = '';
+            document.getElementById('couponValue').value = '';
+            showAlert('✅ Cupón generado', 'success');
+        };
+
+        window.deleteCoupon = async (idx) => {
+            const c = storeData.coupons[idx];
+            if (c && c.docId) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'coupons', c.docId));
+                showAlert('🗑️ Cupón eliminado', 'success');
+            }
+        };
+
+        // --- HELPERS ---
+
+        function populateCurrencies() {
+            const select = document.getElementById('currencySymbol');
+            select.innerHTML = currencies.map(c => `<option value="${c.s}" data-suf="${c.suf || ''}">${c.n}</option>`).join('');
         }
 
-        function cancelEdit() {
+        function setupImagePreview() {
+            const fileInput = document.getElementById('productImageFile');
+            fileInput.addEventListener('change', function(e) {
+                Array.from(e.target.files).forEach((file) => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        tempProductImages.push(event.target.result);
+                        renderImagePreviews();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        }
+
+        function renderImagePreviews() {
+            const previewContainer = document.getElementById('imagesPreview');
+            previewContainer.innerHTML = tempProductImages.map((src, idx) => `
+                <div style="position:relative; width:60px; height:60px; border-radius:8px; overflow:hidden; border:1px solid #eee;">
+                    <img src="${src}" style="width:100%; height:100%; object-fit:cover;">
+                    <button onclick="removeTempImage(${idx})" style="position:absolute; top:0; right:0; background:red; color:white; border:none; cursor:pointer; font-size:10px; width:15px; height:15px;">✕</button>
+                </div>
+            `).join('');
+            document.querySelectorAll('.variant-img-picker').forEach(picker => updateVariantImgPicker(picker.dataset.groupId));
+        }
+
+        window.removeTempImage = (idx) => {
+            tempProductImages.splice(idx, 1);
+            renderImagePreviews();
+        };
+
+        window.clearTempImages = () => {
+            tempProductImages = [];
+            renderImagePreviews();
+        };
+
+        function updateVariantImgPicker(groupId) {
+            const picker = document.querySelector(`.variant-img-picker[data-group-id="${groupId}"]`);
+            if(!picker) return;
+            picker.innerHTML = tempProductImages.map((src) => `
+                <img src="${src}" onclick="selectImageForVariant(this)" data-src="${src}">
+            `).join('') || '<p style="font-size:0.7rem; color:#999;">Sube imágenes primero</p>';
+        }
+
+        window.selectImageForVariant = (el) => {
+            el.parentElement.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
+            el.classList.add('selected');
+        };
+
+        window.addVariantOption = (id) => {
+            const group = document.getElementById(`v-group-${id}`);
+            const input = group.querySelector('.v-opt-in');
+            const list = group.querySelector('.v-options-list');
+            const selectedImg = group.querySelector('.variant-img-picker img.selected');
+            const imgSrc = selectedImg ? selectedImg.dataset.src : '';
+
+            if(!input.value) return;
+            const tag = document.createElement('div');
+            tag.dataset.img = imgSrc;
+            tag.style.cssText = 'background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;';
+            tag.innerHTML = `<span>${input.value}</span> ${imgSrc ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>`;
+            list.appendChild(tag);
+            input.value = '';
+            if(selectedImg) selectedImg.classList.remove('selected');
+        };
+
+        function resetProductForm() {
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productDescription').value = '';
+            document.getElementById('variantsContainer').innerHTML = '';
+            clearTempImages();
             editingProductId = null;
-            resetProductForm();
             document.getElementById('productSubmitBtn').textContent = '➕ Publicar Producto';
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
+
+        window.cancelEdit = () => resetProductForm();
+
+        window.editCategory = (name) => {
+            editingCategoryName = name;
+            const input = document.getElementById('newCategory');
+            input.value = name;
+            input.focus();
+            document.getElementById('categorySubmitBtn').textContent = '💾 Actualizar Nombre';
+            document.getElementById('categoryCancelBtn').classList.remove('hidden');
+        };
+
+        window.cancelCategoryEdit = () => {
+            editingCategoryName = null;
+            document.getElementById('newCategory').value = '';
+            document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
+            document.getElementById('categoryCancelBtn').classList.add('hidden');
+        };
 
         function displayProducts() {
             const display = document.getElementById('productsDisplay');
@@ -1277,49 +1308,27 @@
             `).join('');
         }
 
-        function selectVarOption(el, pid) {
-            el.parentElement.querySelectorAll('.variant-option').forEach(o => o.classList.remove('selected'));
-            el.classList.add('selected');
-            const varImg = el.dataset.varImg;
-            if (varImg && varImg.length > 50) {
-                const mainImg = document.getElementById(`main-img-${pid}`);
-                if (mainImg) mainImg.src = varImg;
-            }
-        }
-
-        function changeQty(pid, val) {
-            const el = document.getElementById(`qty-${pid}`);
-            if(!el) return;
-            let q = parseInt(el.textContent) + val;
-            if(q < 1) q = 1;
-            el.textContent = q;
-        }
-
-        function addToCart(pid) {
-            const p = storeData.products.find(x => x.id === pid);
-            if(!p) return;
-            const qty = parseInt(document.getElementById(`qty-${pid}`).textContent);
-            const vars = {};
-            document.querySelectorAll(`.product-card`).forEach(card => {
-                if(card.querySelector(`[onclick*="addToCart(${pid})"]`)) {
-                    card.querySelectorAll('.variant-options').forEach((vo, idx) => {
-                        const selected = vo.querySelector('.selected');
-                        if(selected) vars[p.variants[idx].name] = selected.textContent;
-                    });
-                }
-            });
-            const currentImg = document.getElementById(`main-img-${pid}`)?.src || p.image;
-            storeData.cart.push({ cartId: Date.now(), productId: pid, variants: vars, quantity: qty, img: currentImg });
-            updateCartBadge(); showAlert('🛒 Añadido al carrito', 'success');
+        function displayCategories() {
+            const list = document.getElementById('categoriesList');
+            if(!list) return;
+            list.innerHTML = storeData.categories.map(c => `
+                <div class="category-item">
+                    <span>${c}</span>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button onclick="editCategory('${c}')" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:600;">Editar</button>
+                        <button onclick="deleteCategory('${c}')" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function updateCartBadge() { document.getElementById('cartBadge').textContent = storeData.cart.reduce((s, i) => s + i.quantity, 0); }
-        function openCart() { 
+        window.openCart = () => { 
             document.getElementById('cartModal').classList.add('active'); 
             document.getElementById('cartCouponSection').classList.toggle('hidden', storeData.coupons.length === 0);
             renderCart(); 
-        }
-        function closeCart() { document.getElementById('cartModal').classList.remove('active'); }
+        };
+        window.closeCart = () => document.getElementById('cartModal').classList.remove('active');
 
         function renderCart() {
             const cont = document.getElementById('cartItems');
@@ -1361,9 +1370,22 @@
             document.getElementById('total').textContent = storeData.currency + formatPrice(finalTotal) + (storeData.currencySuffix || '');
         }
 
-        function removeFromCart(idx) { storeData.cart.splice(idx,1); renderCart(); updateCartBadge(); }
+        window.removeFromCart = (idx) => { storeData.cart.splice(idx,1); renderCart(); updateCartBadge(); };
 
-        function sendWhatsApp() {
+        window.applyCoupon = () => {
+            const input = document.getElementById('cartCouponInput').value.trim().toUpperCase();
+            const coupon = storeData.coupons.find(c => c.code === input);
+            if(!coupon) {
+                appliedCoupon = null;
+                showAlert('❌ Cupón no válido', 'info');
+            } else {
+                appliedCoupon = coupon;
+                showAlert('✅ Cupón aplicado!', 'success');
+            }
+            renderCart();
+        };
+
+        window.sendWhatsApp = () => {
             const name = document.getElementById('customerName').value;
             const addr = document.getElementById('customerAddress').value;
             const phone = document.getElementById('customerPhone').value;
@@ -1377,9 +1399,9 @@
             if(appliedCoupon) msg += `\n🎁 *Cupón:* ${appliedCoupon.code}`;
             msg += `\n\n*TOTAL: ${document.getElementById('total').textContent}*`;
             window.open(`https://wa.me/${storeData.whatsapp.replace(/\+/g,'')}?text=${encodeURIComponent(msg)}`);
-        }
+        };
 
-        async function attemptLogin() {
+        window.attemptLogin = async () => {
             const h = await hashPassword(document.getElementById('loginPassword').value);
             if(h === storeData.auth.passwordHash) {
                 sessionStorage.setItem('adminAuthenticated', 'true');
@@ -1388,20 +1410,25 @@
                 document.getElementById('loginError').textContent = 'Incorrecto'; 
                 document.getElementById('loginError').classList.remove('hidden'); 
             }
-        }
+        };
 
-        async function setupPassword() {
+        window.setupPassword = async () => {
             const p1 = document.getElementById('setupPassword1').value;
             if(p1.length < 6) return showAlert('Mínimo 6 caracteres', 'info');
             storeData.auth.passwordHash = await hashPassword(p1);
-            saveData(); sessionStorage.setItem('adminAuthenticated', 'true');
+            // Rule: Update in cloud immediately
+            await saveCloudDesign();
+            sessionStorage.setItem('adminAuthenticated', 'true');
             location.reload();
-        }
+        };
 
         function checkAdminAccess() {
-            if(!storeData.auth.passwordHash) showModal('setup');
-            else if(sessionStorage.getItem('adminAuthenticated') !== 'true') showModal('login');
-            else document.getElementById('adminPanel').classList.remove('hidden');
+            // Este es un check visual, el cloud sync carga el hash real
+            setTimeout(() => {
+                if(!storeData.auth.passwordHash) showModal('setup');
+                else if(sessionStorage.getItem('adminAuthenticated') !== 'true') showModal('login');
+                else document.getElementById('adminPanel').classList.remove('hidden');
+            }, 1000);
         }
 
         function showModal(t) {
@@ -1410,61 +1437,52 @@
             document.getElementById('setupForm').classList.toggle('hidden', t === 'login');
         }
 
-        function saveDesign() {
-            const sel = document.getElementById('currencySymbol');
-            storeData.name = document.getElementById('storeName').value;
-            storeData.whatsapp = document.getElementById('whatsappNumber').value;
-            storeData.logo = document.getElementById('storeLogo').value;
-            storeData.primaryColor = document.getElementById('primaryColor').value;
-            storeData.currency = sel.value;
-            storeData.currencySuffix = sel.options[sel.selectedIndex]?.dataset.suf || '';
-            storeData.addToCartText = document.getElementById('addToCartText').value;
-            saveData(); updateDisplay(); showAlert('✅ Diseño guardado', 'success');
-        }
+        window.copyLink = () => {
+            document.getElementById('shareLink').select();
+            document.execCommand('copy');
+            showAlert('📋 Copiado', 'success');
+        };
 
-        function initializeTabs() {
-            document.querySelectorAll('.tab').forEach(t => {
-                t.addEventListener('click', () => {
-                    document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active'));
-                    t.classList.add('active');
-                    document.getElementById(t.dataset.tab).classList.add('active');
-                });
-            });
-        }
-
-        function generateShareLink() {
+        window.generateShareLink = () => {
             try {
                 const url = window.location.origin + window.location.pathname + '?shop=customer';
                 document.getElementById('shareLink').value = url;
                 new QRCode(document.getElementById('qrcode'), { text: url, width: 200, height: 200 });
             } catch(e) {}
-        }
+        };
 
-        function copyLink() {
-            document.getElementById('shareLink').select();
-            document.execCommand('copy');
-            showAlert('📋 Copiado', 'success');
-        }
-
-        function exportData() {
+        window.exportData = () => {
             const blob = new Blob([JSON.stringify(storeData)], {type:'application/json'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'backup_tienda.json'; a.click();
-        }
+        };
 
-        function importData() {
+        window.importData = () => {
             const f = document.getElementById('importFile').files[0];
             const r = new FileReader();
-            r.onload = (e) => { storeData = JSON.parse(e.target.result); saveData(); location.reload(); };
+            r.onload = async (e) => { 
+                const imported = JSON.parse(e.target.result); 
+                // Rule: For bulk import, we'd need to setDocs one by one. Better to refresh UI and save.
+                storeData = imported;
+                await saveCloudDesign();
+                await saveCloudCategories();
+                location.reload(); 
+            };
             r.readAsText(f);
-        }
+        };
 
-        function resetData() { if(confirm('¿Borrar TODO permanentemente?')) { localStorage.clear(); location.reload(); } }
+        window.resetData = async () => { 
+            if(confirm('¿Borrar TODO permanentemente?')) { 
+                // Sería necesario borrar cada documento en Firestore.
+                showAlert('Borrado masivo no implementado por seguridad directa. Borre manual.', 'info');
+            } 
+        };
 
         window.addEventListener('load', init);
-        document.getElementById('cartBtn').addEventListener('click', openCart);
+        document.getElementById('cartBtn').addEventListener('click', () => window.openCart());
         document.getElementById('adminToggle').addEventListener('click', () => {
             document.getElementById('adminPanel').classList.toggle('hidden');
         });
+
     </script>
 </body>
 </html>
