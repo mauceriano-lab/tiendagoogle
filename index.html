@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tienda WhatsApp | Premium</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #121212;
+            --primary-light: #2a2a2a;
+            --accent: #b08d57;
+            --accent-light: #d4bc8e;
+            --text: #1a1a1a;
+            --text-light: #757575;
+            --bg: #fdfdfd;
+            --white: #FFFFFF;
+            --border: #eeeeee;
+            --success: #2d5a4a;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.12);
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* Header Moderno */
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1.25rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .logo {
+            width: 42px;
+            height: 42px;
+            background: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--white);
+            transition: transform 0.3s ease;
+        }
+
+        .logo-section:hover .logo { transform: rotate(-10deg); }
+
+        .store-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.01em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Menú de Categorías */
+        .category-nav {
+            background: rgba(253, 253, 253, 0.9);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 83px;
+            z-index: 999;
+            border-bottom: 1px solid #eee;
+            padding: 0.75rem 0;
+        }
+
+        .category-scroll {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .category-scroll::-webkit-scrollbar { display: none; }
+
+        .cat-pill {
+            padding: 0.6rem 1.25rem;
+            background: #f5f5f7;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            color: var(--text-light);
+        }
+
+        .cat-pill:hover {
+            background: #e5e5e7;
+            color: var(--primary);
+        }
+
+        .cat-pill.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        /* Botones */
+        .btn {
+            padding: 0.8rem 1.6rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(176, 141, 87, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e7;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .cart-btn {
+            position: relative;
+            background: var(--primary);
+            color: white;
+            padding: 0.8rem 1.8rem;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--accent);
+            color: var(--white);
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            border: 2px solid var(--white);
+            padding: 0 5px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem 1.5rem;
+        }
+
+        /* Panel de Administración */
+        .admin-panel {
+            background: var(--white);
+            border-radius: 32px;
+            padding: 3rem;
+            margin-bottom: 4rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .admin-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 2.5rem;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            padding: 0.5rem;
+            background: #f5f5f7;
+            border-radius: 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .tab {
+            padding: 0.8rem 1.5rem;
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            border-radius: 15px;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background: var(--white);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.5s ease forwards; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group { margin-bottom: 1.8rem; }
+        label {
+            display: block;
+            margin-bottom: 0.7rem;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 1px solid #e1e1e1;
+            border-radius: 14px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            background: #fcfcfc;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(176, 141, 87, 0.1);
+        }
+
+        /* Cuadrícula de Productos */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .product-card {
+            background: var(--white);
+            border-radius: 28px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 320px;
+            background: #f9f9f9;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .product-image.emoji { font-size: 5rem; }
+
+        .product-content {
+            padding: 2rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-category {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+            margin-bottom: 0.8rem;
+        }
+
+        .product-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            color: var(--primary);
+        }
+
+        .product-description {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 1.8rem;
+            line-height: 1.6;
+        }
+
+        .product-price {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .variant-options { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.6rem; }
+        .variant-option {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid #eeeeee;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .variant-option.selected {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f5f5f7;
+            padding: 0.6rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .quantity-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: var(--white);
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Carrito */
+        .cart-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            justify-content: flex-end;
+            align-items: flex-start;
+        }
+
+        .cart-modal.active { display: flex; }
+
+        .cart-content {
+            background: var(--white);
+            width: 100%;
+            max-width: 500px;
+            height: 100vh;
+            padding: 2.5rem;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            animation: slideLeft 0.4s ease;
+        }
+
+        @keyframes slideLeft {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #f1f1f1;
+            align-items: center;
+        }
+
+        .cart-item-info { flex: 1; }
+        .cart-item-name { font-weight: 700; margin-bottom: 0.2rem; }
+        .cart-item-vars { font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.5rem; }
+
+        .alert {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1.2rem 2.5rem;
+            border-radius: 20px;
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-lg);
+            z-index: 4000;
+            animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: #f9f9f9;
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+        }
+
+        .admin-card {
+            background: var(--white);
+            border: 1px solid #eee;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .hidden { display: none !important; }
+
+        .variant-img-picker {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 10px;
+            background: #fff;
+        }
+        .variant-img-picker img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+        }
+        .variant-img-picker img.selected {
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .products-grid { grid-template-columns: 1fr; }
+            .admin-panel { padding: 1.5rem; }
+            .store-name { font-size: 1.5rem; }
+            .cart-content { width: 100%; max-width: 100%; }
+            .header-content { padding: 0 1rem; }
+            .category-nav { top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="#" class="logo-section" onclick="location.reload()">
+                <div class="logo" id="logoDisplay">🛒</div>
+                <h1 class="store-name" id="storeNameDisplay">Mi Tienda</h1>
+            </a>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="adminToggle">⚙️ Panel</button>
+                <button class="btn btn-primary cart-btn" id="cartBtn">
+                    🛒 <span class="hidden sm:inline">Carrito</span>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Menú de Categorías Navegable -->
+    <nav class="category-nav" id="categoryNav">
+        <div class="category-scroll" id="categoryScroll">
+            <!-- Cargado dinámicamente -->
+        </div>
+    </nav>
+
+    <div id="loginModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 5000; backdrop-filter: blur(15px);">
+        <div style="background: var(--white); padding: 4rem 3rem; border-radius: 40px; max-width: 450px; width: 90%; text-align: center; box-shadow: var(--shadow-lg);">
+            <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">🔐</div>
+            <h2 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 2rem; color: var(--primary);">Acceso Privado</h2>
+            <div id="loginForm">
+                <div class="form-group"><input type="password" id="loginPassword" placeholder="Introduce tu clave" style="text-align: center; font-size: 1.2rem; padding: 1.2rem; border-radius: 20px;"></div>
+                <button class="btn btn-primary" onclick="attemptLogin()" style="width: 100%; padding: 1.2rem; font-size: 1rem; border-radius: 20px;">Acceder al Panel</button>
+                <a href="?shop=customer" style="display: block; margin-top: 2rem; font-size: 0.9rem; color: var(--text-light); text-decoration: none; font-weight: 500;">Continuar como cliente</a>
+            </div>
+            <div id="setupForm" class="hidden">
+                <p style="color: var(--text-light); margin-bottom: 2rem;">Configura tu contraseña para gestionar el catálogo.</p>
+                <div class="form-group"><input type="password" id="setupPassword1" placeholder="Nueva contraseña"></div>
+                <div class="form-group"><input type="password" id="setupPassword2" placeholder="Repite contraseña"></div>
+                <button class="btn btn-primary" onclick="setupPassword()" style="width: 100%; padding: 1.2rem;">Guardar Configuración</button>
+            </div>
+            <div id="loginError" class="hidden" style="background: #FFF0F0; color: #E53E3E; padding: 1rem; border-radius: 15px; margin-top: 2rem; font-size: 0.9rem; border: 1px solid #FED7D7;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="admin-panel hidden" id="adminPanel">
+            <h2 class="admin-title" id="panelTitle">Configuración</h2>
+            <div class="tabs">
+                <button class="tab active" data-tab="design">🎨 Estética</button>
+                <button class="tab" data-tab="products">📦 Inventario</button>
+                <button class="tab" data-tab="categories">📑 Categorías</button>
+                <button class="tab" data-tab="coupons">🎁 Cupones</button>
+                <button class="tab" data-tab="share">🔗 Enlace</button>
+                <button class="tab" data-tab="data">💾 Datos</button>
+            </div>
+
+            <div class="tab-content active" id="design">
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group"><label>Nombre Tienda</label><input type="text" id="storeName"></div>
+                    <div class="form-group"><label>WhatsApp (Prefijo + número ej: +520000000000)</label><input type="text" id="whatsappNumber" placeholder="+520000000000"></div>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                    <div class="form-group"><label>Icono</label><input type="text" id="storeLogo" maxlength="2"></div>
+                    <div class="form-group"><label>Color</label><input type="color" id="primaryColor" style="height: 55px;"></div>
+                    <div class="form-group"><label>Moneda</label><select id="currencySymbol"></select></div>
+                </div>
+                <div class="form-group"><label>Texto Botón Comprar</label><input type="text" id="addToCartText"></div>
+                <button class="btn btn-primary" onclick="saveDesign()" style="width: 100%;">💾 Guardar Cambios</button>
+            </div>
+
+            <div class="tab-content" id="products">
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group"><label>Nombre</label><input type="text" id="productName"></div>
+                    <div class="form-group"><label>Categoría</label><select id="productCategory"></select></div>
+                </div>
+                <div class="form-group"><label>Descripción</label><textarea id="productDescription" rows="3"></textarea></div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Precio (Ej: 3.500 o 3500)</label>
+                        <input type="text" id="productPrice" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Imágenes (Sube primero las imágenes)</label>
+                        <input type="file" id="productImageFile" accept="image/*" multiple>
+                        <div id="imagesPreview" style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;"></div>
+                        <button class="btn btn-secondary" onclick="clearTempImages()" style="margin-top: 1rem; font-size: 0.7rem;">Limpiar Imágenes</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Variantes</label>
+                    <div id="variantsContainer"></div>
+                    <button class="btn btn-secondary" onclick="addVariantGroup()">+ Nuevo Grupo de Variantes</button>
+                </div>
+                <button class="btn btn-primary" id="productSubmitBtn" onclick="addProduct()" style="width: 100%;">➕ Publicar Producto</button>
+                <button class="btn btn-secondary hidden" id="cancelEditBtn" onclick="cancelEdit()" style="width: 100%; margin-top: 0.5rem;">Cancelar Edición</button>
+                
+                <div id="adminProductsList" style="margin-top: 4rem;"></div>
+            </div>
+
+            <div class="tab-content" id="categories">
+                <div class="form-group"><label>Nombre Categoría</label><input type="text" id="newCategory" placeholder="Ej: Electrónica"></div>
+                <button class="btn btn-primary" onclick="addCategory()" id="categorySubmitBtn">Crear Categoría</button>
+                <button class="btn btn-secondary hidden" onclick="cancelCategoryEdit()" id="categoryCancelBtn" style="margin-top: 0.5rem;">Cancelar</button>
+                <div id="categoriesList" style="margin-top: 3rem;"></div>
+            </div>
+
+            <div class="tab-content" id="coupons">
+                <div class="admin-card">
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group"><label>Código</label><input type="text" id="couponCode" placeholder="EJ: PROMO20"></div>
+                        <div class="form-group"><label>Tipo</label><select id="couponType"><option value="percentage">% Descuento</option><option value="fixed">Importe Fijo</option></select></div>
+                    </div>
+                    <div class="form-group"><label>Valor</label><input type="number" id="couponValue" placeholder="20"></div>
+                    <button class="btn btn-primary" onclick="addCoupon()" style="width: 100%;">Generar Cupón</button>
+                </div>
+                <div id="couponsList" style="margin-top: 3rem;"></div>
+            </div>
+
+            <div class="tab-content" id="share">
+                <div style="background: #fafafa; padding: 3rem; border-radius: 30px; text-align: center;">
+                    <input type="text" id="shareLink" readonly style="text-align: center; margin-bottom: 2rem;">
+                    <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 2rem;"></div>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button class="btn btn-primary" onclick="copyLink()">📋 Copiar Enlace</button>
+                        <button class="btn btn-secondary" onclick="downloadQR()">📥 Descargar QR</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="data">
+                <div class="admin-card">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">🔐 Seguridad y Acceso</h3>
+                    <div class="form-group">
+                        <label>Contraseña Actual</label>
+                        <input type="password" id="oldPassword" placeholder="Tu clave actual">
+                    </div>
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Nueva Contraseña</label>
+                            <input type="password" id="newPassword1" placeholder="Mínimo 6 caracteres">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmar Nueva Contraseña</label>
+                            <input type="password" id="newPassword2" placeholder="Repite la clave">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="changeAdminPassword()" style="width: 100%;">🔄 Actualizar Contraseña</button>
+                </div>
+
+                <div class="admin-card">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--primary);">💾 Copia de Seguridad</h3>
+                    <button class="btn btn-primary" onclick="exportData()" style="width: 100%; margin-bottom: 1rem;">⬇️ Descargar Backup</button>
+                    <input type="file" id="importFile" accept=".json">
+                    <button class="btn btn-secondary" onclick="importData()" style="width: 100%; margin-top: 1rem;">⬆️ Cargar Backup</button>
+                </div>
+
+                <div style="border: 2px dashed #fecaca; padding: 2rem; border-radius: 20px; background: #fffaf0;">
+                    <p style="color: #dc2626; font-weight: 700; margin-bottom: 1rem;">⚠️ ZONA DE PELIGRO</p>
+                    <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.5rem;">Borrar todos los datos de la tienda permanentemente.</p>
+                    <button class="btn btn-danger" onclick="resetData()" style="width: 100%;">🗑️ Borrar Todo el Sistema</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="productsDisplay"></div>
+    </div>
+
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-content">
+            <button onclick="closeCart()" style="position: absolute; top: 25px; right: 25px; background:none; border:none; font-size: 1.5rem; cursor:pointer;">✕</button>
+            <div class="cart-header"><h3 style="font-family:'Playfair Display'; font-size:2rem; margin-bottom: 2rem;">Tu Carrito</h3></div>
+            <div id="cartItems"></div>
+            
+            <div id="cartCouponSection" class="hidden" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9f9f9; border-radius: 20px;">
+                <label style="font-size: 0.7rem; font-weight: 700;">¿TIENES UN CUPÓN?</label>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <input type="text" id="cartCouponInput" placeholder="Código" style="padding: 0.6rem; border-radius: 10px;">
+                    <button class="btn btn-secondary" onclick="applyCoupon()" style="padding: 0.6rem 1.2rem; border-radius: 10px;">Aplicar</button>
+                </div>
+                <div id="appliedCouponInfo" style="margin-top: 0.5rem; font-size: 0.8rem; font-weight: 600;"></div>
+            </div>
+
+            <div id="customerForm" class="hidden" style="background:#f8f8f8; padding:2rem; border-radius:25px; margin-top: 2rem; margin-bottom:2rem;">
+                <p style="font-weight: 700; margin-bottom: 1rem;">Datos de Entrega</p>
+                <div class="form-group"><input type="text" id="customerName" placeholder="Nombre completo"></div>
+                <div class="form-group"><input type="tel" id="customerPhone" placeholder="Teléfono de contacto"></div>
+                <div class="form-group"><textarea id="customerAddress" placeholder="Dirección detallada"></textarea></div>
+            </div>
+            <div id="cartTotal" class="hidden" style="margin-top: 2rem; border-top: 2px solid #eee; padding-top: 2rem;">
+                <div id="subtotalDisplay" style="display: flex; justify-content: space-between; font-size: 1rem; color: #777; margin-bottom: 0.5rem;"></div>
+                <div id="discountDisplay" style="display: flex; justify-content: space-between; font-size: 1rem; color: var(--success); margin-bottom: 0.5rem;"></div>
+                <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.8rem; margin-bottom: 2rem;">
+                    <span>Total:</span><span id="total">0.00</span>
+                </div>
+                <button class="btn btn-primary" onclick="sendWhatsApp()" style="width: 100%; padding: 1.5rem; font-size: 1.1rem;">Finalizar Pedido por WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align: center; padding: 6rem 1rem; color: var(--text-light);">
+        &copy; 2026 Todos los derechos reservados. <br>
+        <a href="https://www.trescientospesos.com" target="_blank" style="color: inherit; text-decoration: none; font-weight: 600; font-size: 0.9rem;">Creado por www.trescientospesos.com</a>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        const currencies = [
+            {s: '$', n: 'USD - Dólar (EE.UU., Ecuador, Panamá, El Salvador)'},
+            {s: 'C$', n: 'CAD - Dólar Canadiense'},
+            {s: '$', n: 'MXN - Peso Mexicano', suf: ' MXN'},
+            {s: 'Q', n: 'GTQ - Quetzal (Guatemala)'},
+            {s: 'L', n: 'HNL - Lempira (Honduras)'},
+            {s: 'C$', n: 'NIO - Córdoba (Nicaragua)'},
+            {s: '₡', n: 'CRC - Colón (Costa Rica)'},
+            {s: 'B/.', n: 'PAB - Balboa (Panamá)'},
+            {s: 'RD$', n: 'DOP - Peso Dominicano'},
+            {s: 'CUP', n: 'CUP - Peso Cubano'},
+            {s: '$', n: 'COP - Peso Colombiano', suf: ' COP'},
+            {s: 'S/.', n: 'PEN - Sol Peruano'},
+            {s: 'R$', n: 'BRL - Real Brasileño'},
+            {s: '$', n: 'ARS - Peso Argentino', suf: ' ARS'},
+            {s: '$', n: 'CLP - Peso Chileno', suf: ' CLP'},
+            {s: '₲', n: 'PYG - Guaraní (Paraguay)'},
+            {s: '$U', n: 'UYU - Peso Uruguayo'},
+            {s: 'Bs.', n: 'BOB - Boliviano'},
+            {s: 'Bs.S', n: 'VES - Bolívar (Venezuela)'},
+            {s: '€', n: 'EUR - Euro'},
+            {s: '£', n: 'GBP - Libra'}
+        ];
+
+        let storeData = {
+            name: 'Mi Tienda', logo: '🛒', primaryColor: '#121212', currency: '€', currencySuffix: '',
+            addToCartText: '🛒 Agregar al Carrito', whatsapp: '',
+            auth: { passwordHash: null, isAuthenticated: false },
+            products: [], categories: ['General'], coupons: [], cart: []
+        };
+
+        let tempProductImages = [];
+        let editingProductId = null;
+        let editingCategoryName = null;
+        let appliedCoupon = null;
+
+        function init() {
+            populateCurrencies();
+            loadData();
+            updateDisplay();
+            initializeTabs();
+            generateShareLink();
+            setupImagePreview();
+            if (new URLSearchParams(window.location.search).get('shop') === 'customer') {
+                document.getElementById('adminToggle').classList.add('hidden');
+            } else { checkAdminAccess(); }
+        }
+
+        function formatPrice(value) {
+            return Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function parsePrice(input) {
+            if (!input) return 0;
+            // Elimina puntos de miles y cambia coma por punto para el parseo numérico
+            let clean = input.toString().replace(/\./g, '').replace(',', '.');
+            let num = parseFloat(clean);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function displayCategoryMenu() {
+            const nav = document.getElementById('categoryScroll');
+            if(!nav) return;
+            const categoriesWithProducts = [...new Set(storeData.products.map(p => p.category))];
+            if(categoriesWithProducts.length === 0) {
+                document.getElementById('categoryNav').classList.add('hidden');
+                return;
+            }
+            document.getElementById('categoryNav').classList.remove('hidden');
+            nav.innerHTML = categoriesWithProducts.map(cat => `
+                <div class="cat-pill" onclick="scrollToCategory('${cat}')">${cat}</div>
+            `).join('');
+        }
+
+        function scrollToCategory(name) {
+            const section = Array.from(document.querySelectorAll('h2')).find(h => h.textContent === name);
+            if(section) {
+                const headerOffset = 150;
+                const offsetPosition = section.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+                window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                document.querySelectorAll('.cat-pill').forEach(p => {
+                    p.classList.toggle('active', p.textContent === name);
+                });
+            }
+        }
+
+        function addCoupon() {
+            const code = document.getElementById('couponCode').value.trim().toUpperCase();
+            const type = document.getElementById('couponType').value;
+            const value = parseFloat(document.getElementById('couponValue').value);
+            if(!code || isNaN(value)) return showAlert('⚠️ Datos de cupón inválidos', 'info');
+            storeData.coupons.push({ code, type, value });
+            saveData();
+            displayCoupons();
+            document.getElementById('couponCode').value = '';
+            document.getElementById('couponValue').value = '';
+            showAlert('✅ Cupón generado', 'success');
+        }
+
+        function displayCoupons() {
+            const list = document.getElementById('couponsList');
+            if(!list) return;
+            list.innerHTML = storeData.coupons.map((c, idx) => `
+                <div class="category-item">
+                    <span><strong>${c.code}</strong> (${c.type === 'percentage' ? c.value + '%' : storeData.currency + formatPrice(c.value) + (storeData.currencySuffix || '')})</span>
+                    <button onclick="deleteCoupon(${idx})" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteCoupon(idx) {
+            storeData.coupons.splice(idx, 1);
+            saveData();
+            displayCoupons();
+            showAlert('🗑️ Cupón eliminado', 'success');
+        }
+
+        function applyCoupon() {
+            const input = document.getElementById('cartCouponInput').value.trim().toUpperCase();
+            const coupon = storeData.coupons.find(c => c.code === input);
+            if(!coupon) {
+                appliedCoupon = null;
+                showAlert('❌ Cupón no válido', 'info');
+            } else {
+                appliedCoupon = coupon;
+                showAlert('✅ Cupón aplicado!', 'success');
+            }
+            renderCart();
+        }
+
+        async function changeAdminPassword() {
+            const oldPass = document.getElementById('oldPassword').value;
+            const newPass1 = document.getElementById('newPassword1').value;
+            const newPass2 = document.getElementById('newPassword2').value;
+            if(!oldPass || !newPass1 || !newPass2) return showAlert('⚠️ Completa los campos', 'info');
+            const oldHash = await hashPassword(oldPass);
+            if (oldHash !== storeData.auth.passwordHash) return showAlert('❌ Clave actual incorrecta', 'info');
+            if (newPass1 !== newPass2) return showAlert('❌ No coinciden', 'info');
+            if (newPass1.length < 6) return showAlert('⚠️ Mínimo 6 caracteres', 'info');
+            storeData.auth.passwordHash = await hashPassword(newPass1);
+            saveData();
+            showAlert('✅ Contraseña actualizada', 'success');
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword1').value = '';
+            document.getElementById('newPassword2').value = '';
+        }
+
+        async function hashPassword(p) {
+            const b = new TextEncoder().encode(p);
+            const h = await crypto.subtle.digest('SHA-256', b);
+            return Array.from(new Uint8Array(h)).map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+
+        function populateCurrencies() {
+            const select = document.getElementById('currencySymbol');
+            select.innerHTML = currencies.map(c => `<option value="${c.s}" data-suf="${c.suf || ''}">${c.n}</option>`).join('');
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('storeData');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    storeData = { ...storeData, ...parsed };
+                    document.getElementById('storeName').value = storeData.name;
+                    document.getElementById('whatsappNumber').value = storeData.whatsapp;
+                    document.getElementById('storeLogo').value = storeData.logo;
+                    document.getElementById('primaryColor').value = storeData.primaryColor;
+                    document.getElementById('currencySymbol').value = storeData.currency;
+                    document.getElementById('addToCartText').value = storeData.addToCartText;
+                }
+            } catch (e) {}
+        }
+
+        function saveData() { 
+            try {
+                localStorage.setItem('storeData', JSON.stringify(storeData)); 
+            } catch(e) {
+                showAlert('⚠️ Espacio insuficiente para guardar más datos', 'info');
+            }
+        }
+        
+        function updateColors() { document.documentElement.style.setProperty('--primary', storeData.primaryColor); }
+        
+        function updateDisplay() {
+            document.getElementById('storeNameDisplay').textContent = storeData.name;
+            document.getElementById('logoDisplay').textContent = storeData.logo;
+            updateColors(); 
+            displayProducts(); 
+            displayCategories(); 
+            updateCategorySelect(); 
+            updateCartBadge(); 
+            displayCoupons();
+            displayCategoryMenu();
+        }
+
+        function showAlert(m, t) {
+            const a = document.createElement('div'); 
+            a.className = 'alert'; 
+            a.textContent = m;
+            if(t === 'info') a.style.background = '#333';
+            document.body.appendChild(a); 
+            setTimeout(() => {
+                a.style.opacity = '0';
+                setTimeout(() => a.remove(), 500);
+            }, 3000);
+        }
+
+        function setupImagePreview() {
+            const fileInput = document.getElementById('productImageFile');
+            fileInput.addEventListener('change', function(e) {
+                Array.from(e.target.files).forEach((file) => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        tempProductImages.push(event.target.result);
+                        renderImagePreviews();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        }
+
+        function renderImagePreviews() {
+            const previewContainer = document.getElementById('imagesPreview');
+            previewContainer.innerHTML = tempProductImages.map((src, idx) => `
+                <div style="position:relative; width:60px; height:60px; border-radius:8px; overflow:hidden; border:1px solid #eee;">
+                    <img src="${src}" style="width:100%; height:100%; object-fit:cover;">
+                    <button onclick="removeTempImage(${idx})" style="position:absolute; top:0; right:0; background:red; color:white; border:none; cursor:pointer; font-size:10px; width:15px; height:15px;">✕</button>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.variant-img-picker').forEach(picker => {
+                updateVariantImgPicker(picker.dataset.groupId);
+            });
+        }
+
+        function removeTempImage(idx) {
+            tempProductImages.splice(idx, 1);
+            renderImagePreviews();
+        }
+
+        function clearTempImages() {
+            tempProductImages = [];
+            renderImagePreviews();
+        }
+
+        function addCategory() {
+            const n = document.getElementById('newCategory').value.trim();
+            if(!n) return;
+            if(editingCategoryName) {
+                const idx = storeData.categories.indexOf(editingCategoryName);
+                if(idx !== -1) {
+                    storeData.categories[idx] = n;
+                    storeData.products.forEach(p => { if(p.category === editingCategoryName) p.category = n; });
+                    showAlert('✅ Categoría actualizada', 'success');
+                }
+                editingCategoryName = null;
+                document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
+                document.getElementById('categoryCancelBtn').classList.add('hidden');
+            } else {
+                if(!storeData.categories.includes(n)) { 
+                    storeData.categories.push(n); 
+                    showAlert('✅ Categoría creada', 'success');
+                } else {
+                    return showAlert('⚠️ Ya existe esta categoría', 'info');
+                }
+            }
+            document.getElementById('newCategory').value = '';
+            saveData(); updateDisplay(); 
+        }
+
+        function editCategory(name) {
+            editingCategoryName = name;
+            const input = document.getElementById('newCategory');
+            input.value = name;
+            input.focus();
+            document.getElementById('categorySubmitBtn').textContent = '💾 Actualizar Nombre';
+            document.getElementById('categoryCancelBtn').classList.remove('hidden');
+        }
+
+        function cancelCategoryEdit() {
+            editingCategoryName = null;
+            document.getElementById('newCategory').value = '';
+            document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
+            document.getElementById('categoryCancelBtn').classList.add('hidden');
+        }
+
+        function deleteCategory(name) {
+            if(confirm(`¿Eliminar categoría "${name}"?`)) {
+                storeData.categories = storeData.categories.filter(c => c !== name);
+                if(storeData.categories.length === 0) storeData.categories.push('General');
+                const fallbackCat = storeData.categories[0];
+                storeData.products.forEach(p => { if(p.category === name) p.category = fallbackCat; });
+                saveData(); updateDisplay();
+                showAlert(`🗑️ Categoría "${name}" eliminada`, 'success');
+            }
+        }
+
+        function displayCategories() {
+            const list = document.getElementById('categoriesList');
+            list.innerHTML = storeData.categories.map(c => `
+                <div class="category-item">
+                    <span>${c}</span>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button onclick="editCategory('${c}')" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:600;">Editar</button>
+                        <button onclick="deleteCategory('${c}')" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCategorySelect() {
+            const sel = document.getElementById('productCategory');
+            if(sel) sel.innerHTML = storeData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function addVariantGroup() {
+            const id = Math.floor(Date.now() + Math.random() * 1000);
+            const div = document.createElement('div');
+            div.className = 'variant-builder';
+            div.style.cssText = 'background:#f8f8f8; padding:1.5rem; border-radius:20px; margin-bottom:1.5rem; border:1px solid #eee;';
+            div.id = `v-group-${id}`;
+            div.innerHTML = `
+                <input type="text" placeholder="Ej: Talla o Color" class="v-name" style="margin-bottom:1rem">
+                <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
+                <div style="display:grid; gap:0.5rem;">
+                    <input type="text" placeholder="Opción" class="v-opt-in">
+                    <label style="font-size:0.7rem; margin-top: 5px;">Asignar imagen:</label>
+                    <div class="variant-img-picker" data-group-id="${id}"></div>
+                    <button class="btn btn-secondary" onclick="addVariantOption(${id})">Añadir Opción</button>
+                </div>
+                <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
+            `;
+            document.getElementById('variantsContainer').appendChild(div);
+            updateVariantImgPicker(id);
+        }
+
+        function updateVariantImgPicker(groupId) {
+            const picker = document.querySelector(`.variant-img-picker[data-group-id="${groupId}"]`);
+            if(!picker) return;
+            picker.innerHTML = tempProductImages.map((src, idx) => `
+                <img src="${src}" onclick="selectImageForVariant(this)" data-src="${src}">
+            `).join('') || '<p style="font-size:0.7rem; color:#999;">Sube imágenes primero</p>';
+        }
+
+        function selectImageForVariant(el) {
+            el.parentElement.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function addVariantOption(id) {
+            const group = document.getElementById(`v-group-${id}`);
+            const input = group.querySelector('.v-opt-in');
+            const list = group.querySelector('.v-options-list');
+            const selectedImg = group.querySelector('.variant-img-picker img.selected');
+            const imgSrc = selectedImg ? selectedImg.dataset.src : '';
+
+            if(!input.value) return;
+            const tag = document.createElement('div');
+            tag.dataset.img = imgSrc;
+            tag.style.cssText = 'background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;';
+            tag.innerHTML = `<span>${input.value}</span> ${imgSrc ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>`;
+            list.appendChild(tag);
+            input.value = '';
+            if(selectedImg) selectedImg.classList.remove('selected');
+        }
+
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = parsePrice(document.getElementById('productPrice').value);
+            const category = document.getElementById('productCategory').value || 'General';
+            const description = document.getElementById('productDescription').value;
+
+            if(!name || price <= 0) return showAlert('⚠️ Revisa el nombre y el precio', 'info');
+
+            const variants = [];
+            document.querySelectorAll('.variant-builder').forEach(g => {
+                const vName = g.querySelector('.v-name').value;
+                const opts = Array.from(g.querySelectorAll('.v-options-list div')).map(s => ({ 
+                    text: s.querySelector('span').textContent,
+                    image: s.dataset.img
+                }));
+                if(vName && opts.length) variants.push({ name: vName, options: opts });
+            });
+
+            const newProduct = {
+                id: editingProductId || Date.now(),
+                name, category, description, price, 
+                image: tempProductImages[0] || '📦', 
+                images: [...tempProductImages], 
+                variants
+            };
+
+            if(editingProductId) {
+                const idx = storeData.products.findIndex(p => p.id === editingProductId);
+                if(idx !== -1) storeData.products[idx] = newProduct;
+                editingProductId = null;
+                document.getElementById('productSubmitBtn').textContent = '➕ Publicar Producto';
+                document.getElementById('cancelEditBtn').classList.add('hidden');
+            } else { 
+                storeData.products.push(newProduct); 
+            }
+
+            saveData(); 
+            updateDisplay(); 
+            resetProductForm();
+            showAlert('✅ Publicado correctamente', 'success');
+        }
+
+        function resetProductForm() {
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productDescription').value = '';
+            document.getElementById('variantsContainer').innerHTML = '';
+            clearTempImages();
+        }
+
+        function deleteProduct(id) {
+            if(confirm('¿Eliminar producto?')) {
+                storeData.products = storeData.products.filter(p => p.id !== id);
+                saveData(); updateDisplay();
+                showAlert('🗑️ Producto eliminado', 'success');
+            }
+        }
+
+        function editProduct(id) {
+            const p = storeData.products.find(x => x.id === id);
+            if(!p) return;
+            editingProductId = id;
+            document.getElementById('productName').value = p.name;
+            document.getElementById('productPrice').value = formatPrice(p.price);
+            document.getElementById('productDescription').value = p.description;
+            document.getElementById('productCategory').value = p.category;
+            tempProductImages = [...(p.images || [])];
+            renderImagePreviews();
+
+            const container = document.getElementById('variantsContainer');
+            container.innerHTML = '';
+            (p.variants || []).forEach(v => {
+                const gid = Math.floor(Date.now() + Math.random() * 1000);
+                const div = document.createElement('div');
+                div.className = 'variant-builder';
+                div.style.cssText = 'background:#f8f8f8; padding:1.5rem; border-radius:20px; margin-bottom:1.5rem; border:1px solid #eee;';
+                div.id = `v-group-${gid}`;
+                div.innerHTML = `
+                    <input type="text" placeholder="Ej: Talla" class="v-name" value="${v.name}" style="margin-bottom:1rem">
+                    <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
+                        ${v.options.map(o => `
+                            <div data-img="${o.image || ''}" style="background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                <span>${o.text}</span> ${o.image ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display:grid; gap:0.5rem;">
+                        <input type="text" placeholder="Opción" class="v-opt-in">
+                        <div class="variant-img-picker" data-group-id="${gid}"></div>
+                        <button class="btn btn-secondary" onclick="addVariantOption(${gid})">Añadir Opción</button>
+                    </div>
+                    <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
+                `;
+                container.appendChild(div);
+                updateVariantImgPicker(gid);
+            });
+
+            document.getElementById('productSubmitBtn').textContent = '💾 Guardar Cambios';
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            window.scrollTo({ top: document.getElementById('adminPanel').offsetTop, behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            editingProductId = null;
+            resetProductForm();
+            document.getElementById('productSubmitBtn').textContent = '➕ Publicar Producto';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        function displayProducts() {
+            const display = document.getElementById('productsDisplay');
+            if(!storeData.products || !storeData.products.length) return display.innerHTML = '<div style="text-align:center; padding:4rem; color:#999;">Catálogo vacío</div>';
+            
+            const cats = {};
+            storeData.products.forEach(p => { 
+                const catName = p.category || 'General';
+                if(!cats[catName]) cats[catName] = []; 
+                cats[catName].push(p); 
+            });
+            const isAdmin = sessionStorage.getItem('adminAuthenticated') === 'true';
+
+            display.innerHTML = Object.keys(cats).map(cat => `
+                <section style="margin-bottom:5rem;">
+                    <h2 style="font-family:'Playfair Display'; font-size:2.5rem; text-align:center; margin-bottom:3rem;">${cat}</h2>
+                    <div class="products-grid">
+                        ${cats[cat].map(p => {
+                            const isImg = p.image && (typeof p.image === 'string') && (p.image.length > 50);
+                            return `
+                            <article class="product-card">
+                                <div class="product-image ${!isImg ? 'emoji' : ''}">
+                                    ${isImg ? `<img id="main-img-${p.id}" src="${p.image}" loading="lazy">` : (p.image || '📦')}
+                                </div>
+                                <div class="product-content">
+                                    <span class="product-category">${cat}</span>
+                                    <h3 class="product-name">${p.name}</h3>
+                                    <p class="product-description">${p.description || ''}</p>
+                                    <div class="product-price">${storeData.currency}${formatPrice(p.price)}${storeData.currencySuffix || ''}</div>
+                                    ${(p.variants || []).map(v => `
+                                        <div style="margin-bottom:1rem">
+                                            <span style="font-size:0.7rem; font-weight:800; color:#999">${v.name}</span>
+                                            <div class="variant-options">
+                                                ${(v.options || []).map((o, idx) => `
+                                                    <div class="variant-option ${idx === 0 ? 'selected' : ''}" 
+                                                         data-var-img="${o.image ? o.image.replace(/'/g, "\\'") : ''}"
+                                                         onclick="selectVarOption(this, ${p.id})">${o.text}</div>`).join('')}
+                                            </div>
+                                        </div>`).join('')}
+                                    <div class="quantity-selector">
+                                        <button class="quantity-btn" onclick="changeQty(${p.id}, -1)">−</button>
+                                        <span id="qty-${p.id}" style="font-weight:800">1</span>
+                                        <button class="quantity-btn" onclick="changeQty(${p.id}, 1)">+</button>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="addToCart(${p.id})" style="width:100%">${storeData.addToCartText}</button>
+                                    ${isAdmin ? `
+                                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-top:1rem;">
+                                            <button class="btn btn-secondary" onclick="editProduct(${p.id})">✏️ Editar</button>
+                                            <button class="btn btn-danger" onclick="deleteProduct(${p.id})">🗑️ Borrar</button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </article>`;
+                        }).join('')}
+                    </div>
+                </section>
+            `).join('');
+        }
+
+        function selectVarOption(el, pid) {
+            el.parentElement.querySelectorAll('.variant-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            const varImg = el.dataset.varImg;
+            if (varImg && varImg.length > 50) {
+                const mainImg = document.getElementById(`main-img-${pid}`);
+                if (mainImg) mainImg.src = varImg;
+            }
+        }
+
+        function changeQty(pid, val) {
+            const el = document.getElementById(`qty-${pid}`);
+            if(!el) return;
+            let q = parseInt(el.textContent) + val;
+            if(q < 1) q = 1;
+            el.textContent = q;
+        }
+
+        function addToCart(pid) {
+            const p = storeData.products.find(x => x.id === pid);
+            if(!p) return;
+            const qty = parseInt(document.getElementById(`qty-${pid}`).textContent);
+            const vars = {};
+            document.querySelectorAll(`.product-card`).forEach(card => {
+                if(card.querySelector(`[onclick*="addToCart(${pid})"]`)) {
+                    card.querySelectorAll('.variant-options').forEach((vo, idx) => {
+                        const selected = vo.querySelector('.selected');
+                        if(selected) vars[p.variants[idx].name] = selected.textContent;
+                    });
+                }
+            });
+            const currentImg = document.getElementById(`main-img-${pid}`)?.src || p.image;
+            storeData.cart.push({ cartId: Date.now(), productId: pid, variants: vars, quantity: qty, img: currentImg });
+            updateCartBadge(); showAlert('🛒 Añadido al carrito', 'success');
+        }
+
+        function updateCartBadge() { document.getElementById('cartBadge').textContent = storeData.cart.reduce((s, i) => s + i.quantity, 0); }
+        function openCart() { 
+            document.getElementById('cartModal').classList.add('active'); 
+            document.getElementById('cartCouponSection').classList.toggle('hidden', storeData.coupons.length === 0);
+            renderCart(); 
+        }
+        function closeCart() { document.getElementById('cartModal').classList.remove('active'); }
+
+        function renderCart() {
+            const cont = document.getElementById('cartItems');
+            if(!storeData.cart.length) {
+                cont.innerHTML = '<p style="text-align:center; padding: 2rem;">Carrito vacío</p>';
+                document.getElementById('cartTotal').classList.add('hidden');
+                document.getElementById('customerForm').classList.add('hidden');
+                document.getElementById('cartCouponSection').classList.add('hidden');
+                return;
+            }
+            document.getElementById('cartTotal').classList.remove('hidden');
+            document.getElementById('customerForm').classList.remove('hidden');
+            let subtotal = 0;
+            cont.innerHTML = storeData.cart.map((item, idx) => {
+                const p = storeData.products.find(x => x.id === item.productId);
+                if(!p) return '';
+                subtotal += p.price * item.quantity;
+                return `<div class="cart-item">
+                    <div class="cart-item-info">
+                        <p class="cart-item-name">${p.name} x${item.quantity}</p>
+                        <p class="cart-item-vars">${Object.entries(item.variants).map(([k,v])=>`${k}:${v}`).join(', ')}</p>
+                        <p style="font-weight:700">${storeData.currency}${formatPrice(p.price * item.quantity)}${storeData.currencySuffix || ''}</p>
+                    </div>
+                    <button onclick="removeFromCart(${idx})" style="color:red; border:none; background:none; cursor:pointer">✕</button>
+                </div>`;
+            }).join('');
+            
+            let discount = 0;
+            if(appliedCoupon) {
+                if(appliedCoupon.type === 'percentage') discount = subtotal * (appliedCoupon.value / 100);
+                else discount = appliedCoupon.value;
+                document.getElementById('appliedCouponInfo').textContent = `✅ Cupón ${appliedCoupon.code} aplicado (-${storeData.currency}${formatPrice(discount)}${storeData.currencySuffix || ''})`;
+                document.getElementById('appliedCouponInfo').style.color = "var(--success)";
+            } else { document.getElementById('appliedCouponInfo').textContent = ""; }
+            
+            const finalTotal = Math.max(0, subtotal - discount);
+            document.getElementById('subtotalDisplay').innerHTML = `<span>Subtotal:</span><span>${storeData.currency}${formatPrice(subtotal)}${storeData.currencySuffix || ''}</span>`;
+            document.getElementById('discountDisplay').innerHTML = discount > 0 ? `<span>Descuento:</span><span>-${storeData.currency}${formatPrice(discount)}${storeData.currencySuffix || ''}</span>` : "";
+            document.getElementById('total').textContent = storeData.currency + formatPrice(finalTotal) + (storeData.currencySuffix || '');
+        }
+
+        function removeFromCart(idx) { storeData.cart.splice(idx,1); renderCart(); updateCartBadge(); }
+
+        function sendWhatsApp() {
+            const name = document.getElementById('customerName').value;
+            const addr = document.getElementById('customerAddress').value;
+            const phone = document.getElementById('customerPhone').value;
+            if(!name || !addr || !phone) return showAlert('⚠️ Faltan datos de envío', 'info');
+            
+            let msg = `🛍️ *PEDIDO: ${storeData.name}*\nCliente: ${name}\nTel: ${phone}\nDirección: ${addr}\n\n`;
+            storeData.cart.forEach(i => {
+                const p = storeData.products.find(x => x.id === i.productId);
+                msg += `• ${p.name} x${i.quantity} (${Object.values(i.variants).join('/')}) -> ${storeData.currency}${formatPrice(p.price * i.quantity)}${storeData.currencySuffix || ''}\n`;
+            });
+            if(appliedCoupon) msg += `\n🎁 *Cupón:* ${appliedCoupon.code}`;
+            msg += `\n\n*TOTAL: ${document.getElementById('total').textContent}*`;
+            window.open(`https://wa.me/${storeData.whatsapp.replace(/\+/g,'')}?text=${encodeURIComponent(msg)}`);
+        }
+
+        async function attemptLogin() {
+            const h = await hashPassword(document.getElementById('loginPassword').value);
+            if(h === storeData.auth.passwordHash) {
+                sessionStorage.setItem('adminAuthenticated', 'true');
+                location.reload();
+            } else { 
+                document.getElementById('loginError').textContent = 'Incorrecto'; 
+                document.getElementById('loginError').classList.remove('hidden'); 
+            }
+        }
+
+        async function setupPassword() {
+            const p1 = document.getElementById('setupPassword1').value;
+            if(p1.length < 6) return showAlert('Mínimo 6 caracteres', 'info');
+            storeData.auth.passwordHash = await hashPassword(p1);
+            saveData(); sessionStorage.setItem('adminAuthenticated', 'true');
+            location.reload();
+        }
+
+        function checkAdminAccess() {
+            if(!storeData.auth.passwordHash) showModal('setup');
+            else if(sessionStorage.getItem('adminAuthenticated') !== 'true') showModal('login');
+            else document.getElementById('adminPanel').classList.remove('hidden');
+        }
+
+        function showModal(t) {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('loginForm').classList.toggle('hidden', t === 'setup');
+            document.getElementById('setupForm').classList.toggle('hidden', t === 'login');
+        }
+
+        function saveDesign() {
+            const sel = document.getElementById('currencySymbol');
+            storeData.name = document.getElementById('storeName').value;
+            storeData.whatsapp = document.getElementById('whatsappNumber').value;
+            storeData.logo = document.getElementById('storeLogo').value;
+            storeData.primaryColor = document.getElementById('primaryColor').value;
+            storeData.currency = sel.value;
+            storeData.currencySuffix = sel.options[sel.selectedIndex]?.dataset.suf || '';
+            storeData.addToCartText = document.getElementById('addToCartText').value;
+            saveData(); updateDisplay(); showAlert('✅ Diseño guardado', 'success');
+        }
+
+        function initializeTabs() {
+            document.querySelectorAll('.tab').forEach(t => {
+                t.addEventListener('click', () => {
+                    document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active'));
+                    t.classList.add('active');
+                    document.getElementById(t.dataset.tab).classList.add('active');
+                });
+            });
+        }
+
+        function generateShareLink() {
+            try {
+                const url = window.location.origin + window.location.pathname + '?shop=customer';
+                document.getElementById('shareLink').value = url;
+                new QRCode(document.getElementById('qrcode'), { text: url, width: 200, height: 200 });
+            } catch(e) {}
+        }
+
+        function copyLink() {
+            document.getElementById('shareLink').select();
+            document.execCommand('copy');
+            showAlert('📋 Copiado', 'success');
+        }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(storeData)], {type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'backup_tienda.json'; a.click();
+        }
+
+        function importData() {
+            const f = document.getElementById('importFile').files[0];
+            const r = new FileReader();
+            r.onload = (e) => { storeData = JSON.parse(e.target.result); saveData(); location.reload(); };
+            r.readAsText(f);
+        }
+
+        function resetData() { if(confirm('¿Borrar TODO permanentemente?')) { localStorage.clear(); location.reload(); } }
+
+        window.addEventListener('load', init);
+        document.getElementById('cartBtn').addEventListener('click', openCart);
+        document.getElementById('adminToggle').addEventListener('click', () => {
+            document.getElementById('adminPanel').classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
