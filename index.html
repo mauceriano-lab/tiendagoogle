@@ -95,7 +95,7 @@
             align-items: center;
         }
 
-        /* Menú de Categorías (Nuevo) */
+        /* Menú de Categorías */
         .category-nav {
             background: rgba(253, 253, 253, 0.9);
             backdrop-filter: blur(10px);
@@ -113,10 +113,10 @@
             display: flex;
             gap: 0.75rem;
             overflow-x: auto;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
 
-        .category-scroll::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        .category-scroll::-webkit-scrollbar { display: none; }
 
         .cat-pill {
             padding: 0.6rem 1.25rem;
@@ -535,7 +535,7 @@
         </div>
     </header>
 
-    <!-- Menú de Categorías Navegable (Nuevo) -->
+    <!-- Menú de Categorías Navegable -->
     <nav class="category-nav" id="categoryNav">
         <div class="category-scroll" id="categoryScroll">
             <!-- Cargado dinámicamente -->
@@ -594,7 +594,10 @@
                 </div>
                 <div class="form-group"><label>Descripción</label><textarea id="productDescription" rows="3"></textarea></div>
                 <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group"><label>Precio</label><input type="number" id="productPrice" step="0.01"></div>
+                    <div class="form-group">
+                        <label>Precio (Ej: 3.500 o 3500)</label>
+                        <input type="text" id="productPrice" placeholder="0.00">
+                    </div>
                     <div class="form-group">
                         <label>Imágenes (Sube primero las imágenes)</label>
                         <input type="file" id="productImageFile" accept="image/*" multiple>
@@ -687,7 +690,6 @@
             <div class="cart-header"><h3 style="font-family:'Playfair Display'; font-size:2rem; margin-bottom: 2rem;">Tu Carrito</h3></div>
             <div id="cartItems"></div>
             
-            <!-- Sección de Cupones en Carrito -->
             <div id="cartCouponSection" class="hidden" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9f9f9; border-radius: 20px;">
                 <label style="font-size: 0.7rem; font-weight: 700;">¿TIENES UN CUPÓN?</label>
                 <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
@@ -719,9 +721,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         const currencies = [
-            {s: '€', n: 'EUR - Euro'}, {s: '$', n: 'USD - Dólar'}, {s: 'Mex$', n: 'MXN - Peso Mexicano'}, 
-            {s: 'COL$', n: 'COP - Peso Colombiano'}, {s: 'S/.', n: 'PEN - Sol Peruano'}, {s: 'ARS$', n: 'ARS - Peso Argentino'}, 
-            {s: 'CLP$', n: 'CLP - Peso Chileno'}
+            // América del Norte y Central
+            {s: '$', n: 'USD - Dólar (EE.UU., Ecuador, Panamá, El Salvador)'},
+            {s: 'C$', n: 'CAD - Dólar Canadiense'},
+            {s: 'Mex$', n: 'MXN - Peso Mexicano'},
+            {s: 'Q', n: 'GTQ - Quetzal (Guatemala)'},
+            {s: 'L', n: 'HNL - Lempira (Honduras)'},
+            {s: 'C$', n: 'NIO - Córdoba (Nicaragua)'},
+            {s: '₡', n: 'CRC - Colón (Costa Rica)'},
+            {s: 'B/.', n: 'PAB - Balboa (Panamá)'},
+            {s: 'RD$', n: 'DOP - Peso Dominicano'},
+            {s: 'CUP', n: 'CUP - Peso Cubano'},
+            {s: 'BZ$', n: 'BZD - Dólar Beliceño'},
+            {s: 'HTG', n: 'HTG - Gourde (Haití)'},
+            {s: 'J$', n: 'JMD - Dólar Jamaiquino'},
+            // América del Sur
+            {s: 'COL$', n: 'COP - Peso Colombiano'},
+            {s: 'S/.', n: 'PEN - Sol Peruano'},
+            {s: 'BRL R$', n: 'BRL - Real Brasileño'},
+            {s: 'ARS$', n: 'ARS - Peso Argentino'},
+            {s: 'CLP$', n: 'CLP - Peso Chileno'},
+            {s: '₲', n: 'PYG - Guaraní (Paraguay)'},
+            {s: 'U$U', n: 'UYU - Peso Uruguayo'},
+            {s: 'Bs.', n: 'BOB - Boliviano'},
+            {s: 'Bs.S', n: 'VES - Bolívar (Venezuela)'},
+            {s: 'GY$', n: 'GYD - Dólar Guyanés'},
+            {s: 'SRD', n: 'SRD - Dólar Surinamés'},
+            // Europa y Otros
+            {s: '€', n: 'EUR - Euro'},
+            {s: '£', n: 'GBP - Libra'}
         ];
 
         let storeData = {
@@ -748,19 +776,26 @@
             } else { checkAdminAccess(); }
         }
 
+        // --- FORMATEO DE PRECIOS PREMIUM ---
+        function formatPrice(value) {
+            return value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function parsePrice(input) {
+            if (!input) return 0;
+            let clean = input.toString().replace(/\./g, '').replace(',', '.');
+            return parseFloat(clean) || 0;
+        }
+
         // --- GESTIÓN DE CATEGORÍAS (UI) ---
         function displayCategoryMenu() {
             const nav = document.getElementById('categoryScroll');
             if(!nav) return;
-            
-            // Solo mostrar categorías que tengan productos
             const categoriesWithProducts = [...new Set(storeData.products.map(p => p.category))];
-            
             if(categoriesWithProducts.length === 0) {
                 document.getElementById('categoryNav').classList.add('hidden');
                 return;
             }
-            
             document.getElementById('categoryNav').classList.remove('hidden');
             nav.innerHTML = categoriesWithProducts.map(cat => `
                 <div class="cat-pill" onclick="scrollToCategory('${cat}')">${cat}</div>
@@ -770,16 +805,10 @@
         function scrollToCategory(name) {
             const section = Array.from(document.querySelectorAll('h2')).find(h => h.textContent === name);
             if(section) {
-                const headerOffset = 150; // Ajuste para header + menú categorías
+                const headerOffset = 150;
                 const elementPosition = section.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth"
-                });
-                
-                // Marcar como activo visualmente
+                window.scrollTo({ top: offsetPosition, behavior: "smooth" });
                 document.querySelectorAll('.cat-pill').forEach(p => {
                     p.classList.toggle('active', p.textContent === name);
                 });
@@ -791,9 +820,7 @@
             const code = document.getElementById('couponCode').value.trim().toUpperCase();
             const type = document.getElementById('couponType').value;
             const value = parseFloat(document.getElementById('couponValue').value);
-            
             if(!code || isNaN(value)) return showAlert('⚠️ Datos de cupón inválidos', 'info');
-            
             storeData.coupons.push({ code, type, value });
             saveData();
             displayCoupons();
@@ -807,7 +834,7 @@
             if(!list) return;
             list.innerHTML = storeData.coupons.map((c, idx) => `
                 <div class="category-item">
-                    <span><strong>${c.code}</strong> (${c.type === 'percentage' ? c.value + '%' : storeData.currency + c.value})</span>
+                    <span><strong>${c.code}</strong> (${c.type === 'percentage' ? c.value + '%' : storeData.currency + formatPrice(c.value)})</span>
                     <button onclick="deleteCoupon(${idx})" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
                 </div>
             `).join('');
@@ -823,7 +850,6 @@
         function applyCoupon() {
             const input = document.getElementById('cartCouponInput').value.trim().toUpperCase();
             const coupon = storeData.coupons.find(c => c.code === input);
-            
             if(!coupon) {
                 appliedCoupon = null;
                 showAlert('❌ Cupón no válido', 'info');
@@ -892,7 +918,7 @@
             updateCategorySelect(); 
             updateCartBadge(); 
             displayCoupons();
-            displayCategoryMenu(); // Actualizar el menú de categorías
+            displayCategoryMenu();
         }
 
         function showAlert(m, t) {
@@ -945,23 +971,17 @@
         function addCategory() {
             const n = document.getElementById('newCategory').value.trim();
             if(!n) return;
-            
             if(editingCategoryName) {
-                // Lógica de actualización
                 const idx = storeData.categories.indexOf(editingCategoryName);
                 if(idx !== -1) {
                     storeData.categories[idx] = n;
-                    // Actualizar categoría en los productos existentes
-                    storeData.products.forEach(p => {
-                        if(p.category === editingCategoryName) p.category = n;
-                    });
+                    storeData.products.forEach(p => { if(p.category === editingCategoryName) p.category = n; });
                     showAlert('✅ Categoría actualizada', 'success');
                 }
                 editingCategoryName = null;
                 document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
                 document.getElementById('categoryCancelBtn').classList.add('hidden');
             } else {
-                // Lógica de creación
                 if(!storeData.categories.includes(n)) { 
                     storeData.categories.push(n); 
                     showAlert('✅ Categoría creada', 'success');
@@ -969,7 +989,6 @@
                     return showAlert('⚠️ Ya existe una categoría con ese nombre', 'info');
                 }
             }
-            
             document.getElementById('newCategory').value = '';
             saveData(); updateDisplay(); 
         }
@@ -995,9 +1014,7 @@
                 storeData.categories = storeData.categories.filter(c => c !== name);
                 if(storeData.categories.length === 0) storeData.categories.push('General');
                 const fallbackCat = storeData.categories[0];
-                storeData.products.forEach(p => {
-                    if(p.category === name) p.category = fallbackCat;
-                });
+                storeData.products.forEach(p => { if(p.category === name) p.category = fallbackCat; });
                 saveData(); updateDisplay();
                 showAlert(`🗑️ Categoría "${name}" eliminada`, 'success');
             }
@@ -1053,8 +1070,8 @@
 
         function addProduct() {
             const name = document.getElementById('productName').value;
-            const price = parseFloat(document.getElementById('productPrice').value);
-            if(!name || isNaN(price)) return showAlert('⚠️ Faltan datos', 'info');
+            const price = parsePrice(document.getElementById('productPrice').value);
+            if(!name || price <= 0) return showAlert('⚠️ Faltan datos o precio inválido', 'info');
             const variants = [];
             document.querySelectorAll('.variant-builder').forEach(g => {
                 const vName = g.querySelector('.v-name').value;
@@ -1099,11 +1116,41 @@
             if(!p) return;
             editingProductId = id;
             document.getElementById('productName').value = p.name;
-            document.getElementById('productPrice').value = p.price;
+            document.getElementById('productPrice').value = formatPrice(p.price);
             document.getElementById('productDescription').value = p.description;
             document.getElementById('productCategory').value = p.category;
             tempProductImages = [...(p.images || [])];
             renderImagePreviews();
+
+            // Reparar variantes al editar
+            const container = document.getElementById('variantsContainer');
+            container.innerHTML = '';
+            if (p.variants && p.variants.length > 0) {
+                p.variants.forEach(v => {
+                    const gid = Date.now() + Math.random();
+                    const div = document.createElement('div');
+                    div.className = 'variant-builder';
+                    div.style.cssText = 'background:#f8f8f8; padding:1.5rem; border-radius:20px; margin-bottom:1.5rem; border:1px solid #eee;';
+                    div.id = `v-group-${gid}`;
+                    div.innerHTML = `
+                        <input type="text" placeholder="Ej: Talla o Color" class="v-name" value="${v.name}" style="margin-bottom:1rem">
+                        <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
+                            ${v.options.map(o => `
+                                <div style="background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                    <span>${o.text}</span> <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="display:grid; gap:0.5rem;">
+                            <input type="text" placeholder="Opción" class="v-opt-in">
+                            <button class="btn btn-secondary" onclick="addVariantOption(${gid})">Añadir Opción</button>
+                        </div>
+                        <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
             document.getElementById('productSubmitBtn').textContent = '💾 Guardar Cambios';
             document.getElementById('cancelEditBtn').classList.remove('hidden');
             window.scrollTo({ top: document.getElementById('adminPanel').offsetTop, behavior: 'smooth' });
@@ -1139,14 +1186,14 @@
                                     <span class="product-category">${cat}</span>
                                     <h3 class="product-name">${p.name}</h3>
                                     <p class="product-description">${p.description || ''}</p>
-                                    <div class="product-price">${storeData.currency}${p.price.toFixed(2)}</div>
+                                    <div class="product-price">${storeData.currency}${formatPrice(p.price)}</div>
                                     ${p.variants.map(v => `
                                         <div style="margin-bottom:1rem">
                                             <span style="font-size:0.7rem; font-weight:800; color:#999">${v.name}</span>
                                             <div class="variant-options">
                                                 ${v.options.map((o, idx) => `
                                                     <div class="variant-option ${idx === 0 ? 'selected' : ''}" 
-                                                         onclick="selectVarOption(this, ${p.id}, '${o.image || ''}')">${o.text}</div>`).join('')}
+                                                         onclick="selectVarOption(this, ${p.id})">${o.text}</div>`).join('')}
                                             </div>
                                         </div>`).join('')}
                                     <div class="quantity-selector">
@@ -1169,7 +1216,7 @@
             `).join('');
         }
 
-        function selectVarOption(el, pid, varImg) {
+        function selectVarOption(el, pid) {
             el.parentElement.querySelectorAll('.variant-option').forEach(o => o.classList.remove('selected'));
             el.classList.add('selected');
         }
@@ -1216,7 +1263,6 @@
             }
             document.getElementById('cartTotal').classList.remove('hidden');
             document.getElementById('customerForm').classList.remove('hidden');
-            
             let subtotal = 0;
             cont.innerHTML = storeData.cart.map((item, idx) => {
                 const p = storeData.products.find(x => x.id === item.productId);
@@ -1225,27 +1271,22 @@
                     <div class="cart-item-info">
                         <p class="cart-item-name">${p.name} x${item.quantity}</p>
                         <p class="cart-item-vars">${Object.entries(item.variants).map(([k,v])=>`${k}:${v}`).join(', ')}</p>
-                        <p style="font-weight:700">${storeData.currency}${(p.price * item.quantity).toFixed(2)}</p>
+                        <p style="font-weight:700">${storeData.currency}${formatPrice(p.price * item.quantity)}</p>
                     </div>
                     <button onclick="removeFromCart(${idx})" style="color:red; border:none; background:none; cursor:pointer">✕</button>
                 </div>`;
             }).join('');
-            
-            // Lógica de descuento
             let discount = 0;
             if(appliedCoupon) {
                 if(appliedCoupon.type === 'percentage') discount = subtotal * (appliedCoupon.value / 100);
                 else discount = appliedCoupon.value;
-                document.getElementById('appliedCouponInfo').textContent = `✅ Cupón ${appliedCoupon.code} aplicado (-${storeData.currency}${discount.toFixed(2)})`;
+                document.getElementById('appliedCouponInfo').textContent = `✅ Cupón ${appliedCoupon.code} aplicado (-${storeData.currency}${formatPrice(discount)})`;
                 document.getElementById('appliedCouponInfo').style.color = "var(--success)";
-            } else {
-                document.getElementById('appliedCouponInfo').textContent = "";
-            }
-
+            } else { document.getElementById('appliedCouponInfo').textContent = ""; }
             const finalTotal = Math.max(0, subtotal - discount);
-            document.getElementById('subtotalDisplay').innerHTML = `<span>Subtotal:</span><span>${storeData.currency}${subtotal.toFixed(2)}</span>`;
-            document.getElementById('discountDisplay').innerHTML = discount > 0 ? `<span>Descuento:</span><span>-${storeData.currency}${discount.toFixed(2)}</span>` : "";
-            document.getElementById('total').textContent = storeData.currency + finalTotal.toFixed(2);
+            document.getElementById('subtotalDisplay').innerHTML = `<span>Subtotal:</span><span>${storeData.currency}${formatPrice(subtotal)}</span>`;
+            document.getElementById('discountDisplay').innerHTML = discount > 0 ? `<span>Descuento:</span><span>-${storeData.currency}${formatPrice(discount)}</span>` : "";
+            document.getElementById('total').textContent = storeData.currency + formatPrice(finalTotal);
         }
 
         function removeFromCart(idx) { storeData.cart.splice(idx,1); renderCart(); updateCartBadge(); }
@@ -1255,16 +1296,13 @@
             const addr = document.getElementById('customerAddress').value;
             const phone = document.getElementById('customerPhone').value;
             if(!name || !addr || !phone) return showAlert('⚠️ Faltan datos de envío', 'info');
-            
             let msg = `🛍️ *PEDIDO: ${storeData.name}*\nCliente: ${name}\nTel: ${phone}\nDirección: ${addr}\n\n`;
             storeData.cart.forEach(i => {
                 const p = storeData.products.find(x => x.id === i.productId);
-                msg += `• ${p.name} x${i.quantity} (${Object.values(i.variants).join('/')})\n`;
+                msg += `• ${p.name} x${i.quantity} (${Object.values(i.variants).join('/')}) -> ${storeData.currency}${formatPrice(p.price * i.quantity)}\n`;
             });
-            
-            if(appliedCoupon) msg += `\n🎁 *Cupón aplicado:* ${appliedCoupon.code}`;
+            if(appliedCoupon) msg += `\n🎁 *Cupón:* ${appliedCoupon.code}`;
             msg += `\n\n*TOTAL: ${document.getElementById('total').textContent}*`;
-            
             window.open(`https://wa.me/${storeData.whatsapp.replace(/\+/g,'')}?text=${encodeURIComponent(msg)}`);
         }
 
