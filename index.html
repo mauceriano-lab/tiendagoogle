@@ -419,14 +419,6 @@
             align-items: center;
         }
 
-        .cart-item-img {
-            width: 80px;
-            height: 80px;
-            border-radius: 15px;
-            object-fit: cover;
-            background: #f9f9f9;
-        }
-
         .cart-item-info { flex: 1; }
         .cart-item-name { font-weight: 700; margin-bottom: 0.2rem; }
         .cart-item-vars { font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.5rem; }
@@ -449,27 +441,6 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        .variant-img-picker {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 10px 0;
-            margin-bottom: 10px;
-        }
-        .variant-img-picker img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: 0.2s;
-        }
-        .variant-img-picker img.selected {
-            border-color: var(--accent);
-            transform: scale(1.1);
-        }
-
         .category-item {
             display: flex;
             justify-content: space-between;
@@ -478,6 +449,14 @@
             background: #f9f9f9;
             margin-bottom: 0.5rem;
             border-radius: 12px;
+        }
+
+        .admin-card {
+            background: var(--white);
+            border: 1px solid #eee;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
         }
 
         .hidden { display: none !important; }
@@ -536,7 +515,7 @@
                 <button class="tab" data-tab="categories">📑 Categorías</button>
                 <button class="tab" data-tab="coupons">🎁 Cupones</button>
                 <button class="tab" data-tab="share">🔗 Enlace</button>
-                <button class="tab" data-tab="data">💾 Backup</button>
+                <button class="tab" data-tab="data">💾 Datos</button>
             </div>
 
             <div class="tab-content active" id="design">
@@ -576,9 +555,7 @@
                 <button class="btn btn-primary" id="productSubmitBtn" onclick="addProduct()" style="width: 100%;">➕ Publicar Producto</button>
                 <button class="btn btn-secondary hidden" id="cancelEditBtn" onclick="cancelEdit()" style="width: 100%; margin-top: 0.5rem;">Cancelar Edición</button>
                 
-                <div id="adminProductsList" style="margin-top: 4rem;">
-                    <!-- Aquí listaremos los productos para editarlos/borrarlos desde el admin -->
-                </div>
+                <div id="adminProductsList" style="margin-top: 4rem;"></div>
             </div>
 
             <div class="tab-content" id="categories">
@@ -588,12 +565,14 @@
             </div>
 
             <div class="tab-content" id="coupons">
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group"><label>Código</label><input type="text" id="couponCode"></div>
-                    <div class="form-group"><label>Tipo</label><select id="couponType"><option value="percentage">% Descuento</option><option value="fixed">Importe Fijo</option></select></div>
+                <div class="admin-card">
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group"><label>Código</label><input type="text" id="couponCode" placeholder="EJ: PROMO20"></div>
+                        <div class="form-group"><label>Tipo</label><select id="couponType"><option value="percentage">% Descuento</option><option value="fixed">Importe Fijo</option></select></div>
+                    </div>
+                    <div class="form-group"><label>Valor</label><input type="number" id="couponValue" placeholder="20"></div>
+                    <button class="btn btn-primary" onclick="addCoupon()" style="width: 100%;">Generar Cupón</button>
                 </div>
-                <div class="form-group"><label>Valor</label><input type="number" id="couponValue"></div>
-                <button class="btn btn-primary" onclick="addCoupon()">Generar Cupón</button>
                 <div id="couponsList" style="margin-top: 3rem;"></div>
             </div>
 
@@ -609,10 +588,37 @@
             </div>
 
             <div class="tab-content" id="data">
-                <button class="btn btn-primary" onclick="exportData()" style="width: 100%; margin-bottom: 2rem;">⬇️ Descargar Copia</button>
-                <input type="file" id="importFile" accept=".json">
-                <button class="btn btn-secondary" onclick="importData()" style="width: 100%; margin-top: 1rem;">⬆️ Cargar Datos</button>
-                <button class="btn btn-secondary" onclick="resetData()" style="background: #fee2e2; color: #dc2626; margin-top: 2rem; width: 100%;">🗑️ Borrar Todo</button>
+                <div class="admin-card">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">🔐 Seguridad y Acceso</h3>
+                    <div class="form-group">
+                        <label>Contraseña Actual</label>
+                        <input type="password" id="oldPassword" placeholder="Tu clave actual">
+                    </div>
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Nueva Contraseña</label>
+                            <input type="password" id="newPassword1" placeholder="Mínimo 6 caracteres">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmar Nueva Contraseña</label>
+                            <input type="password" id="newPassword2" placeholder="Repite la clave">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="changeAdminPassword()" style="width: 100%;">🔄 Actualizar Contraseña</button>
+                </div>
+
+                <div class="admin-card">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--primary);">💾 Copia de Seguridad</h3>
+                    <button class="btn btn-primary" onclick="exportData()" style="width: 100%; margin-bottom: 1rem;">⬇️ Descargar Backup</button>
+                    <input type="file" id="importFile" accept=".json">
+                    <button class="btn btn-secondary" onclick="importData()" style="width: 100%; margin-top: 1rem;">⬆️ Cargar Backup</button>
+                </div>
+
+                <div style="border: 2px dashed #fecaca; padding: 2rem; border-radius: 20px; background: #fffaf0;">
+                    <p style="color: #dc2626; font-weight: 700; margin-bottom: 1rem;">⚠️ ZONA DE PELIGRO</p>
+                    <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.5rem;">Acción irreversible.</p>
+                    <button class="btn btn-danger" onclick="resetData()" style="width: 100%;">🗑️ Borrar Todo el Sistema</button>
+                </div>
             </div>
         </div>
 
@@ -623,17 +629,27 @@
         <div class="cart-content">
             <button onclick="closeCart()" style="position: absolute; top: 25px; right: 25px; background:none; border:none; font-size: 1.5rem; cursor:pointer;">✕</button>
             <div class="cart-header"><h3 style="font-family:'Playfair Display'; font-size:2rem; margin-bottom: 2rem;">Tu Carrito</h3></div>
-            
             <div id="cartItems"></div>
             
+            <!-- Sección de Cupones en Carrito -->
+            <div id="cartCouponSection" class="hidden" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9f9f9; border-radius: 20px;">
+                <label style="font-size: 0.7rem; font-weight: 700;">¿TIENES UN CUPÓN?</label>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <input type="text" id="cartCouponInput" placeholder="Código" style="padding: 0.6rem; border-radius: 10px;">
+                    <button class="btn btn-secondary" onclick="applyCoupon()" style="padding: 0.6rem 1.2rem; border-radius: 10px;">Aplicar</button>
+                </div>
+                <div id="appliedCouponInfo" style="margin-top: 0.5rem; font-size: 0.8rem; font-weight: 600;"></div>
+            </div>
+
             <div id="customerForm" class="hidden" style="background:#f8f8f8; padding:2rem; border-radius:25px; margin-top: 2rem; margin-bottom:2rem;">
                 <p style="font-weight: 700; margin-bottom: 1rem;">Datos de Entrega</p>
                 <div class="form-group"><input type="text" id="customerName" placeholder="Nombre completo"></div>
                 <div class="form-group"><input type="tel" id="customerPhone" placeholder="Teléfono de contacto"></div>
                 <div class="form-group"><textarea id="customerAddress" placeholder="Dirección detallada"></textarea></div>
             </div>
-
             <div id="cartTotal" class="hidden" style="margin-top: 2rem; border-top: 2px solid #eee; padding-top: 2rem;">
+                <div id="subtotalDisplay" style="display: flex; justify-content: space-between; font-size: 1rem; color: #777; margin-bottom: 0.5rem;"></div>
+                <div id="discountDisplay" style="display: flex; justify-content: space-between; font-size: 1rem; color: var(--success); margin-bottom: 0.5rem;"></div>
                 <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.8rem; margin-bottom: 2rem;">
                     <span>Total:</span><span id="total">0.00</span>
                 </div>
@@ -661,6 +677,7 @@
 
         let tempProductImages = [];
         let editingProductId = null;
+        let appliedCoupon = null;
 
         function init() {
             populateCurrencies();
@@ -674,11 +691,122 @@
             } else { checkAdminAccess(); }
         }
 
+        // --- GESTIÓN DE CUPONES ---
+        function addCoupon() {
+            const code = document.getElementById('couponCode').value.trim().toUpperCase();
+            const type = document.getElementById('couponType').value;
+            const value = parseFloat(document.getElementById('couponValue').value);
+            
+            if(!code || isNaN(value)) return showAlert('⚠️ Datos de cupón inválidos', 'info');
+            
+            storeData.coupons.push({ code, type, value });
+            saveData();
+            displayCoupons();
+            document.getElementById('couponCode').value = '';
+            document.getElementById('couponValue').value = '';
+            showAlert('✅ Cupón generado', 'success');
+        }
+
+        function displayCoupons() {
+            const list = document.getElementById('couponsList');
+            if(!list) return;
+            list.innerHTML = storeData.coupons.map((c, idx) => `
+                <div class="category-item">
+                    <span><strong>${c.code}</strong> (${c.type === 'percentage' ? c.value + '%' : storeData.currency + c.value})</span>
+                    <button onclick="deleteCoupon(${idx})" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteCoupon(idx) {
+            storeData.coupons.splice(idx, 1);
+            saveData();
+            displayCoupons();
+            showAlert('🗑️ Cupón eliminado', 'success');
+        }
+
+        function applyCoupon() {
+            const input = document.getElementById('cartCouponInput').value.trim().toUpperCase();
+            const coupon = storeData.coupons.find(c => c.code === input);
+            
+            if(!coupon) {
+                appliedCoupon = null;
+                showAlert('❌ Cupón no válido', 'info');
+            } else {
+                appliedCoupon = coupon;
+                showAlert('✅ Cupón aplicado!', 'success');
+            }
+            renderCart();
+        }
+
+        // --- SEGURIDAD ---
+        async function changeAdminPassword() {
+            const oldPass = document.getElementById('oldPassword').value;
+            const newPass1 = document.getElementById('newPassword1').value;
+            const newPass2 = document.getElementById('newPassword2').value;
+            if(!oldPass || !newPass1 || !newPass2) return showAlert('⚠️ Completa los campos', 'info');
+            const oldHash = await hashPassword(oldPass);
+            if (oldHash !== storeData.auth.passwordHash) return showAlert('❌ Clave actual incorrecta', 'info');
+            if (newPass1 !== newPass2) return showAlert('❌ No coinciden', 'info');
+            if (newPass1.length < 6) return showAlert('⚠️ Mínimo 6 caracteres', 'info');
+            storeData.auth.passwordHash = await hashPassword(newPass1);
+            saveData();
+            showAlert('✅ Contraseña actualizada', 'success');
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword1').value = '';
+            document.getElementById('newPassword2').value = '';
+        }
+
+        async function hashPassword(p) {
+            const b = new TextEncoder().encode(p);
+            const h = await crypto.subtle.digest('SHA-256', b);
+            return Array.from(new Uint8Array(h)).map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+
+        // --- CORE LÓGICA ---
         function populateCurrencies() {
             const select = document.getElementById('currencySymbol');
             select.innerHTML = currencies.map(c => `<option value="${c.s}">${c.n} (${c.s})</option>`).join('');
         }
 
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('storeData');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    storeData = { ...storeData, ...parsed };
+                    document.getElementById('storeName').value = storeData.name;
+                    document.getElementById('whatsappNumber').value = storeData.whatsapp;
+                    document.getElementById('storeLogo').value = storeData.logo;
+                    document.getElementById('primaryColor').value = storeData.primaryColor;
+                    document.getElementById('currencySymbol').value = storeData.currency;
+                    document.getElementById('addToCartText').value = storeData.addToCartText;
+                }
+            } catch (e) {}
+        }
+
+        function saveData() { localStorage.setItem('storeData', JSON.stringify(storeData)); }
+        function updateColors() { document.documentElement.style.setProperty('--primary', storeData.primaryColor); }
+        
+        function updateDisplay() {
+            document.getElementById('storeNameDisplay').textContent = storeData.name;
+            document.getElementById('logoDisplay').textContent = storeData.logo;
+            updateColors(); displayProducts(); displayCategories(); updateCategorySelect(); updateCartBadge(); displayCoupons();
+        }
+
+        function showAlert(m, t) {
+            const a = document.createElement('div'); 
+            a.className = 'alert'; 
+            a.textContent = m;
+            if(t === 'info') a.style.background = '#333';
+            document.body.appendChild(a); 
+            setTimeout(() => {
+                a.style.opacity = '0';
+                setTimeout(() => a.remove(), 500);
+            }, 3000);
+        }
+
+        // --- PRODUCTOS ---
         function setupImagePreview() {
             const fileInput = document.getElementById('productImageFile');
             fileInput.addEventListener('change', function(e) {
@@ -701,26 +829,6 @@
                     <button onclick="removeTempImage(${idx})" style="position:absolute; top:0; right:0; background:red; color:white; border:none; cursor:pointer; font-size:10px; width:15px; height:15px;">✕</button>
                 </div>
             `).join('');
-            
-            document.querySelectorAll('.variant-img-picker').forEach(picker => {
-                const groupId = picker.dataset.groupId;
-                updateVariantImgPicker(groupId);
-            });
-        }
-
-        function updateVariantImgPicker(groupId) {
-            const picker = document.querySelector(`#v-group-${groupId} .variant-img-picker`);
-            if(!picker) return;
-            picker.innerHTML = tempProductImages.map((src, idx) => `
-                <img src="${src}" onclick="selectVariantImage(this, '${groupId}')" data-idx="${idx}">
-            `).join('') || '<p style="font-size:0.7rem; color:#999;">Sube imágenes arriba para seleccionar una</p>';
-        }
-
-        function selectVariantImage(el, groupId) {
-            const picker = el.parentElement;
-            picker.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
-            el.classList.add('selected');
-            picker.dataset.selectedIdx = el.dataset.idx;
         }
 
         function removeTempImage(idx) {
@@ -733,6 +841,44 @@
             renderImagePreviews();
         }
 
+        function addCategory() {
+            const n = document.getElementById('newCategory').value.trim();
+            if(n && !storeData.categories.includes(n)) { 
+                storeData.categories.push(n); 
+                document.getElementById('newCategory').value = '';
+                saveData(); updateDisplay(); 
+                showAlert('✅ Categoría creada', 'success');
+            }
+        }
+
+        function deleteCategory(name) {
+            if(confirm(`¿Eliminar categoría "${name}"?`)) {
+                storeData.categories = storeData.categories.filter(c => c !== name);
+                if(storeData.categories.length === 0) storeData.categories.push('General');
+                const fallbackCat = storeData.categories[0];
+                storeData.products.forEach(p => {
+                    if(p.category === name) p.category = fallbackCat;
+                });
+                saveData(); updateDisplay();
+                showAlert(`🗑️ Categoría "${name}" eliminada`, 'success');
+            }
+        }
+
+        function displayCategories() {
+            const list = document.getElementById('categoriesList');
+            list.innerHTML = storeData.categories.map(c => `
+                <div class="category-item">
+                    <span>${c}</span>
+                    <button onclick="deleteCategory('${c}')" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function updateCategorySelect() {
+            const sel = document.getElementById('productCategory');
+            if(sel) sel.innerHTML = storeData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
         function addVariantGroup() {
             const id = Date.now();
             const div = document.createElement('div');
@@ -743,77 +889,51 @@
                 <input type="text" placeholder="Ej: Talla o Color" class="v-name" style="margin-bottom:1rem">
                 <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
                 <div style="display:grid; gap:0.5rem;">
-                    <input type="text" placeholder="Opción (XL, Rojo...)" class="v-opt-in">
-                    <label style="font-size:0.7rem">Imagen asociada:</label>
-                    <div class="variant-img-picker" data-group-id="${id}"></div>
+                    <input type="text" placeholder="Opción" class="v-opt-in">
                     <button class="btn btn-secondary" onclick="addVariantOption(${id})">Añadir Opción</button>
                 </div>
                 <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
             `;
             document.getElementById('variantsContainer').appendChild(div);
-            updateVariantImgPicker(id);
         }
 
         function addVariantOption(id) {
             const group = document.getElementById(`v-group-${id}`);
             const input = group.querySelector('.v-opt-in');
-            const picker = group.querySelector('.variant-img-picker');
             const list = group.querySelector('.v-options-list');
-            
             if(!input.value) return;
-            
-            const selectedIdx = picker.dataset.selectedIdx;
-            const imgData = selectedIdx !== undefined ? tempProductImages[selectedIdx] : null;
-
             const tag = document.createElement('div');
-            tag.dataset.img = imgData || '';
             tag.style.cssText = 'background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;';
-            tag.innerHTML = `<span>${input.value}</span>${imgData ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>`;
+            tag.innerHTML = `<span>${input.value}</span> <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>`;
             list.appendChild(tag);
-            
             input.value = '';
-            picker.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
-            delete picker.dataset.selectedIdx;
         }
 
         function addProduct() {
             const name = document.getElementById('productName').value;
             const price = parseFloat(document.getElementById('productPrice').value);
             if(!name || isNaN(price)) return showAlert('⚠️ Faltan datos', 'info');
-
             const variants = [];
             document.querySelectorAll('.variant-builder').forEach(g => {
                 const vName = g.querySelector('.v-name').value;
-                const opts = Array.from(g.querySelectorAll('.v-options-list div')).map(s => ({
-                    text: s.querySelector('span').textContent,
-                    image: s.dataset.img
-                }));
+                const opts = Array.from(g.querySelectorAll('.v-options-list div')).map(s => ({ text: s.querySelector('span').textContent }));
                 if(vName && opts.length) variants.push({ name: vName, options: opts });
             });
-
             const newProduct = {
                 id: editingProductId || Date.now(),
-                name,
-                category: document.getElementById('productCategory').value,
+                name, category: document.getElementById('productCategory').value,
                 description: document.getElementById('productDescription').value,
-                price,
-                image: tempProductImages[0] || '📦',
-                images: [...tempProductImages],
-                variants
+                price, image: tempProductImages[0] || '📦', images: [...tempProductImages], variants
             };
-
             if(editingProductId) {
                 const idx = storeData.products.findIndex(p => p.id === editingProductId);
                 storeData.products[idx] = newProduct;
                 editingProductId = null;
                 document.getElementById('productSubmitBtn').textContent = '➕ Publicar Producto';
                 document.getElementById('cancelEditBtn').classList.add('hidden');
-            } else {
-                storeData.products.push(newProduct);
-            }
-
+            } else { storeData.products.push(newProduct); }
             saveData(); updateDisplay(); resetProductForm();
-            showAlert('✅ Operación Exitosa', 'success');
+            showAlert('✅ Producto guardado', 'success');
         }
 
         function resetProductForm() {
@@ -825,7 +945,7 @@
         }
 
         function deleteProduct(id) {
-            if(confirm('¿Eliminar este producto?')) {
+            if(confirm('¿Eliminar producto?')) {
                 storeData.products = storeData.products.filter(p => p.id !== id);
                 saveData(); updateDisplay();
                 showAlert('🗑️ Producto eliminado', 'success');
@@ -835,45 +955,13 @@
         function editProduct(id) {
             const p = storeData.products.find(x => x.id === id);
             if(!p) return;
-
             editingProductId = id;
             document.getElementById('productName').value = p.name;
             document.getElementById('productPrice').value = p.price;
             document.getElementById('productDescription').value = p.description;
             document.getElementById('productCategory').value = p.category;
-            
             tempProductImages = [...(p.images || [])];
             renderImagePreviews();
-
-            const container = document.getElementById('variantsContainer');
-            container.innerHTML = '';
-            p.variants.forEach(v => {
-                const gid = Date.now() + Math.random();
-                const div = document.createElement('div');
-                div.className = 'variant-builder';
-                div.style.cssText = 'background:#f8f8f8; padding:1.5rem; border-radius:20px; margin-bottom:1.5rem; border:1px solid #eee;';
-                div.id = `v-group-${gid}`;
-                div.innerHTML = `
-                    <input type="text" placeholder="Ej: Talla o Color" class="v-name" value="${v.name}" style="margin-bottom:1rem">
-                    <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
-                        ${v.options.map(o => `
-                            <div data-img="${o.image || ''}" style="background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;">
-                                <span>${o.text}</span>${o.image ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="display:grid; gap:0.5rem;">
-                        <input type="text" placeholder="Opción" class="v-opt-in">
-                        <label style="font-size:0.7rem">Imagen asociada:</label>
-                        <div class="variant-img-picker" data-group-id="${gid}"></div>
-                        <button class="btn btn-secondary" onclick="addVariantOption(${gid})">Añadir Opción</button>
-                    </div>
-                    <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
-                `;
-                container.appendChild(div);
-                updateVariantImgPicker(gid);
-            });
-
             document.getElementById('productSubmitBtn').textContent = '💾 Guardar Cambios';
             document.getElementById('cancelEditBtn').classList.remove('hidden');
             window.scrollTo({ top: document.getElementById('adminPanel').offsetTop, behavior: 'smooth' });
@@ -886,22 +974,12 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
-        function selectVarOption(el, pid, varImg) {
-            el.parentElement.querySelectorAll('.variant-option').forEach(o => o.classList.remove('selected'));
-            el.classList.add('selected');
-            if(varImg) {
-                const mainImg = document.getElementById(`main-img-${pid}`);
-                if(mainImg) mainImg.src = varImg;
-            }
-        }
-
+        // --- TIENDA Y CARRITO ---
         function displayProducts() {
             const display = document.getElementById('productsDisplay');
             if(!storeData.products.length) return display.innerHTML = '<div style="text-align:center; padding:4rem; color:#999;">Catálogo vacío</div>';
-            
             const cats = {};
             storeData.products.forEach(p => { if(!cats[p.category]) cats[p.category] = []; cats[p.category].push(p); });
-
             const isAdmin = sessionStorage.getItem('adminAuthenticated') === 'true';
 
             display.innerHTML = Object.keys(cats).map(cat => `
@@ -926,7 +1004,7 @@
                                             <div class="variant-options">
                                                 ${v.options.map((o, idx) => `
                                                     <div class="variant-option ${idx === 0 ? 'selected' : ''}" 
-                                                         onclick="selectVarOption(this, ${p.id}, '${o.image}')">${o.text}</div>`).join('')}
+                                                         onclick="selectVarOption(this, ${p.id}, '${o.image || ''}')">${o.text}</div>`).join('')}
                                             </div>
                                         </div>`).join('')}
                                     <div class="quantity-selector">
@@ -935,7 +1013,6 @@
                                         <button class="quantity-btn" onclick="changeQty(${p.id}, 1)">+</button>
                                     </div>
                                     <button class="btn btn-primary" onclick="addToCart(${p.id})" style="width:100%">${storeData.addToCartText}</button>
-                                    
                                     ${isAdmin ? `
                                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-top:1rem;">
                                             <button class="btn btn-secondary" onclick="editProduct(${p.id})">✏️ Editar</button>
@@ -950,28 +1027,9 @@
             `).join('');
         }
 
-        function loadData() {
-            try {
-                const saved = localStorage.getItem('storeData');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    storeData = { ...storeData, ...parsed };
-                    document.getElementById('storeName').value = storeData.name;
-                    document.getElementById('whatsappNumber').value = storeData.whatsapp;
-                    document.getElementById('storeLogo').value = storeData.logo;
-                    document.getElementById('primaryColor').value = storeData.primaryColor;
-                    document.getElementById('currencySymbol').value = storeData.currency;
-                    document.getElementById('addToCartText').value = storeData.addToCartText;
-                }
-            } catch (e) {}
-        }
-
-        function saveData() { localStorage.setItem('storeData', JSON.stringify(storeData)); }
-        function updateColors() { document.documentElement.style.setProperty('--primary', storeData.primaryColor); }
-        function updateDisplay() {
-            document.getElementById('storeNameDisplay').textContent = storeData.name;
-            document.getElementById('logoDisplay').textContent = storeData.logo;
-            updateColors(); displayProducts(); displayCategories(); updateCategorySelect(); updateCartBadge();
+        function selectVarOption(el, pid, varImg) {
+            el.parentElement.querySelectorAll('.variant-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
         }
 
         function changeQty(pid, val) {
@@ -985,8 +1043,6 @@
             const p = storeData.products.find(x => x.id === pid);
             const qty = parseInt(document.getElementById(`qty-${pid}`).textContent);
             const vars = {};
-            
-            // Buscar los seleccionados en la UI
             document.querySelectorAll(`.product-card`).forEach(card => {
                 if(card.querySelector(`[onclick*="addToCart(${pid})"]`)) {
                     card.querySelectorAll('.variant-options').forEach((vo, idx) => {
@@ -995,138 +1051,96 @@
                     });
                 }
             });
-
-            const cartItem = { 
-                cartId: Date.now(), 
-                productId: pid, 
-                variants: vars, 
-                quantity: qty,
-                img: document.getElementById(`main-img-${pid}`)?.src || p.image
-            };
-            
-            storeData.cart.push(cartItem);
-            updateCartBadge(); 
-            showAlert('🛒 Añadido al carrito', 'success');
+            storeData.cart.push({ cartId: Date.now(), productId: pid, variants: vars, quantity: qty, img: p.image });
+            updateCartBadge(); showAlert('🛒 Añadido al carrito', 'success');
         }
 
-        function updateCartBadge() { 
-            const totalItems = storeData.cart.reduce((s, i) => s + i.quantity, 0);
-            document.getElementById('cartBadge').textContent = totalItems; 
-        }
-
+        function updateCartBadge() { document.getElementById('cartBadge').textContent = storeData.cart.reduce((s, i) => s + i.quantity, 0); }
         function openCart() { 
             document.getElementById('cartModal').classList.add('active'); 
+            document.getElementById('cartCouponSection').classList.toggle('hidden', storeData.coupons.length === 0);
             renderCart(); 
         }
-
         function closeCart() { document.getElementById('cartModal').classList.remove('active'); }
 
         function renderCart() {
             const cont = document.getElementById('cartItems');
             if(!storeData.cart.length) {
-                cont.innerHTML = `
-                    <div style="text-align:center; padding: 3rem 0;">
-                        <div style="font-size: 4rem; margin-bottom: 1rem;">🛍️</div>
-                        <p style="color: #999;">Tu carrito está vacío</p>
-                    </div>
-                `;
+                cont.innerHTML = '<p style="text-align:center; padding: 2rem;">Carrito vacío</p>';
                 document.getElementById('cartTotal').classList.add('hidden');
                 document.getElementById('customerForm').classList.add('hidden');
+                document.getElementById('cartCouponSection').classList.add('hidden');
                 return;
             }
             document.getElementById('cartTotal').classList.remove('hidden');
             document.getElementById('customerForm').classList.remove('hidden');
             
-            let total = 0;
+            let subtotal = 0;
             cont.innerHTML = storeData.cart.map((item, idx) => {
                 const p = storeData.products.find(x => x.id === item.productId);
-                if(!p) return '';
-                total += p.price * item.quantity;
-                const isImg = item.img && (item.img.startsWith('http') || item.img.startsWith('data:'));
-
-                return `
-                <div class="cart-item">
-                    ${isImg ? `<img src="${item.img}" class="cart-item-img">` : `<div class="cart-item-img" style="display:flex; align-items:center; justify-content:center; font-size:2rem;">📦</div>`}
+                subtotal += p.price * item.quantity;
+                return `<div class="cart-item">
                     <div class="cart-item-info">
-                        <p class="cart-item-name">${p.name}</p>
+                        <p class="cart-item-name">${p.name} x${item.quantity}</p>
                         <p class="cart-item-vars">${Object.entries(item.variants).map(([k,v])=>`${k}:${v}`).join(', ')}</p>
-                        <div style="display:flex; align-items:center; gap:1rem;">
-                            <div class="quantity-selector" style="margin-bottom:0; padding:0.3rem;">
-                                <button class="quantity-btn" style="width:25px; height:25px;" onclick="updateCartQty(${idx}, -1)">−</button>
-                                <span style="font-size:0.8rem; padding:0 10px;">${item.quantity}</span>
-                                <button class="quantity-btn" style="width:25px; height:25px;" onclick="updateCartQty(${idx}, 1)">+</button>
-                            </div>
-                            <span style="font-weight:700;">${storeData.currency}${(p.price * item.quantity).toFixed(2)}</span>
-                        </div>
+                        <p style="font-weight:700">${storeData.currency}${(p.price * item.quantity).toFixed(2)}</p>
                     </div>
-                    <button onclick="removeFromCart(${idx})" style="color:#ff4444; background:none; border:none; cursor:pointer; font-size:1.2rem;">✕</button>
+                    <button onclick="removeFromCart(${idx})" style="color:red; border:none; background:none; cursor:pointer">✕</button>
                 </div>`;
             }).join('');
-            document.getElementById('total').textContent = storeData.currency + total.toFixed(2);
+            
+            // Lógica de descuento
+            let discount = 0;
+            if(appliedCoupon) {
+                if(appliedCoupon.type === 'percentage') discount = subtotal * (appliedCoupon.value / 100);
+                else discount = appliedCoupon.value;
+                document.getElementById('appliedCouponInfo').textContent = `✅ Cupón ${appliedCoupon.code} aplicado (-${storeData.currency}${discount.toFixed(2)})`;
+                document.getElementById('appliedCouponInfo').style.color = "var(--success)";
+            } else {
+                document.getElementById('appliedCouponInfo').textContent = "";
+            }
+
+            const finalTotal = Math.max(0, subtotal - discount);
+            document.getElementById('subtotalDisplay').innerHTML = `<span>Subtotal:</span><span>${storeData.currency}${subtotal.toFixed(2)}</span>`;
+            document.getElementById('discountDisplay').innerHTML = discount > 0 ? `<span>Descuento:</span><span>-${storeData.currency}${discount.toFixed(2)}</span>` : "";
+            document.getElementById('total').textContent = storeData.currency + finalTotal.toFixed(2);
         }
 
-        function updateCartQty(idx, val) {
-            storeData.cart[idx].quantity += val;
-            if(storeData.cart[idx].quantity < 1) storeData.cart[idx].quantity = 1;
-            renderCart();
-            updateCartBadge();
-        }
-
-        function removeFromCart(idx) { 
-            storeData.cart.splice(idx,1); 
-            renderCart(); 
-            updateCartBadge(); 
-        }
+        function removeFromCart(idx) { storeData.cart.splice(idx,1); renderCart(); updateCartBadge(); }
 
         function sendWhatsApp() {
             const name = document.getElementById('customerName').value;
             const addr = document.getElementById('customerAddress').value;
             const phone = document.getElementById('customerPhone').value;
+            if(!name || !addr || !phone) return showAlert('⚠️ Faltan datos de envío', 'info');
             
-            if(!name || !addr || !phone) return showAlert('⚠️ Por favor completa tus datos de envío', 'info');
-            
-            let msg = `🛍️ *NUEVO PEDIDO: ${storeData.name}*\n\n`;
-            msg += `👤 *Cliente:* ${name}\n`;
-            msg += `📞 *Teléfono:* ${phone}\n`;
-            msg += `📍 *Dirección:* ${addr}\n\n`;
-            msg += `🛒 *Productos:*\n`;
-            
+            let msg = `🛍️ *PEDIDO: ${storeData.name}*\nCliente: ${name}\nTel: ${phone}\nDirección: ${addr}\n\n`;
             storeData.cart.forEach(i => {
                 const p = storeData.products.find(x => x.id === i.productId);
-                const vars = Object.entries(i.variants).map(([k,v])=>`${k}: ${v}`).join(', ');
-                msg += `• ${p.name} ${vars ? `(${vars})` : ''} x${i.quantity} -> *${storeData.currency}${(p.price * i.quantity).toFixed(2)}*\n`;
+                msg += `• ${p.name} x${i.quantity} (${Object.values(i.variants).join('/')})\n`;
             });
             
-            msg += `\n💰 *TOTAL: ${document.getElementById('total').textContent}*`;
+            if(appliedCoupon) msg += `\n🎁 *Cupón aplicado:* ${appliedCoupon.code}`;
+            msg += `\n\n*TOTAL: ${document.getElementById('total').textContent}*`;
             
-            const waNumber = storeData.whatsapp.replace(/\+/g,'').replace(/\s/g,'');
-            window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`);
+            window.open(`https://wa.me/${storeData.whatsapp.replace(/\+/g,'')}?text=${encodeURIComponent(msg)}`);
         }
 
-        async function hashPassword(p) {
-            const b = new TextEncoder().encode(p);
-            const h = await crypto.subtle.digest('SHA-256', b);
-            return Array.from(new Uint8Array(h)).map(x => x.toString(16).padStart(2, '0')).join('');
-        }
-
+        // --- LOGIN ---
         async function attemptLogin() {
-            const pass = document.getElementById('loginPassword').value;
-            const h = await hashPassword(pass);
+            const h = await hashPassword(document.getElementById('loginPassword').value);
             if(h === storeData.auth.passwordHash) {
                 sessionStorage.setItem('adminAuthenticated', 'true');
                 location.reload();
             } else { 
-                document.getElementById('loginError').textContent = 'Clave incorrecta'; 
+                document.getElementById('loginError').textContent = 'Incorrecto'; 
                 document.getElementById('loginError').classList.remove('hidden'); 
             }
         }
 
         async function setupPassword() {
             const p1 = document.getElementById('setupPassword1').value;
-            const p2 = document.getElementById('setupPassword2').value;
-            if(p1 !== p2) return showAlert('Las contraseñas no coinciden', 'info');
             if(p1.length < 6) return showAlert('Mínimo 6 caracteres', 'info');
-            
             storeData.auth.passwordHash = await hashPassword(p1);
             saveData(); sessionStorage.setItem('adminAuthenticated', 'true');
             location.reload();
@@ -1151,7 +1165,7 @@
             storeData.primaryColor = document.getElementById('primaryColor').value;
             storeData.currency = document.getElementById('currencySymbol').value;
             storeData.addToCartText = document.getElementById('addToCartText').value;
-            saveData(); updateDisplay(); showAlert('✅ Configuración guardada', 'success');
+            saveData(); updateDisplay(); showAlert('✅ Diseño guardado', 'success');
         }
 
         function initializeTabs() {
@@ -1164,76 +1178,16 @@
             });
         }
 
-        function addCategory() {
-            const n = document.getElementById('newCategory').value.trim();
-            if(n && !storeData.categories.includes(n)) { 
-                storeData.categories.push(n); 
-                document.getElementById('newCategory').value = '';
-                saveData(); updateDisplay(); 
-                showAlert('✅ Categoría creada', 'success');
-            }
-        }
-
-        function deleteCategory(name) {
-            if(name === 'General') return showAlert('No se puede eliminar la categoría principal', 'info');
-            if(confirm(`¿Eliminar categoría "${name}"? Los productos pasarán a General.`)) {
-                storeData.categories = storeData.categories.filter(c => c !== name);
-                storeData.products.forEach(p => {
-                    if(p.category === name) p.category = 'General';
-                });
-                saveData(); updateDisplay();
-            }
-        }
-
-        function displayCategories() {
-            const list = document.getElementById('categoriesList');
-            list.innerHTML = storeData.categories.map(c => `
-                <div class="category-item">
-                    <span>${c}</span>
-                    ${c !== 'General' ? `<button onclick="deleteCategory('${c}')" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>` : ''}
-                </div>
-            `).join('');
-        }
-
-        function updateCategorySelect() {
-            const sel = document.getElementById('productCategory');
-            sel.innerHTML = storeData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
-        }
-
-        function showAlert(m, t) {
-            const a = document.createElement('div'); 
-            a.className = 'alert'; 
-            a.textContent = m;
-            if(t === 'info') a.style.background = '#333';
-            document.body.appendChild(a); 
-            setTimeout(() => {
-                a.style.opacity = '0';
-                setTimeout(() => a.remove(), 500);
-            }, 3000);
-        }
-
         function generateShareLink() {
             const url = window.location.origin + window.location.pathname + '?shop=customer';
             document.getElementById('shareLink').value = url;
-            const qrCont = document.getElementById('qrcode');
-            qrCont.innerHTML = '';
-            new QRCode(qrCont, { text: url, width: 200, height: 200 });
-        }
-
-        function downloadQR() {
-            const qrCanvas = document.querySelector('#qrcode canvas');
-            if (qrCanvas) {
-                const link = document.createElement('a');
-                link.download = 'qr-mi-tienda.png';
-                link.href = qrCanvas.toDataURL();
-                link.click();
-            }
+            new QRCode(document.getElementById('qrcode'), { text: url, width: 200, height: 200 });
         }
 
         function copyLink() {
             document.getElementById('shareLink').select();
             document.execCommand('copy');
-            showAlert('📋 Enlace copiado al portapapeles', 'success');
+            showAlert('📋 Copiado', 'success');
         }
 
         function exportData() {
@@ -1243,28 +1197,17 @@
 
         function importData() {
             const f = document.getElementById('importFile').files[0];
-            if(!f) return;
             const r = new FileReader();
-            r.onload = (e) => { 
-                try {
-                    storeData = JSON.parse(e.target.result); 
-                    saveData(); 
-                    location.reload(); 
-                } catch(err) { showAlert('Error al cargar archivo', 'info'); }
-            };
+            r.onload = (e) => { storeData = JSON.parse(e.target.result); saveData(); location.reload(); };
             r.readAsText(f);
         }
 
-        function resetData() { if(confirm('¿BORRAR TODO? Se perderán productos y configuración.')) { localStorage.clear(); location.reload(); } }
+        function resetData() { if(confirm('¿Borrar TODO permanentemente?')) { localStorage.clear(); location.reload(); } }
 
         window.addEventListener('load', init);
         document.getElementById('cartBtn').addEventListener('click', openCart);
         document.getElementById('adminToggle').addEventListener('click', () => {
-            const panel = document.getElementById('adminPanel');
-            panel.classList.toggle('hidden');
-            if(!panel.classList.contains('hidden')) {
-                window.scrollTo({ top: panel.offsetTop - 100, behavior: 'smooth' });
-            }
+            document.getElementById('adminPanel').classList.toggle('hidden');
         });
     </script>
 </body>
