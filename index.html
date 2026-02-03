@@ -724,7 +724,7 @@
             // América del Norte y Central
             {s: '$', n: 'USD - Dólar (EE.UU., Ecuador, Panamá, El Salvador)'},
             {s: 'C$', n: 'CAD - Dólar Canadiense'},
-            {s: 'Mex$', n: 'MXN - Peso Mexicano'},
+            {s: '$', n: 'MXN - Peso Mexicano', suf: ' MXN'},
             {s: 'Q', n: 'GTQ - Quetzal (Guatemala)'},
             {s: 'L', n: 'HNL - Lempira (Honduras)'},
             {s: 'C$', n: 'NIO - Córdoba (Nicaragua)'},
@@ -736,13 +736,13 @@
             {s: 'HTG', n: 'HTG - Gourde (Haití)'},
             {s: 'J$', n: 'JMD - Dólar Jamaiquino'},
             // América del Sur
-            {s: 'COL$', n: 'COP - Peso Colombiano'},
+            {s: '$', n: 'COP - Peso Colombiano', suf: ' COP'},
             {s: 'S/.', n: 'PEN - Sol Peruano'},
-            {s: 'BRL R$', n: 'BRL - Real Brasileño'},
-            {s: 'ARS$', n: 'ARS - Peso Argentino'},
-            {s: 'CLP$', n: 'CLP - Peso Chileno'},
+            {s: 'R$', n: 'BRL - Real Brasileño'},
+            {s: '$', n: 'ARS - Peso Argentino', suf: ' ARS'},
+            {s: '$', n: 'CLP - Peso Chileno', suf: ' CLP'},
             {s: '₲', n: 'PYG - Guaraní (Paraguay)'},
-            {s: 'U$U', n: 'UYU - Peso Uruguayo'},
+            {s: '$U', n: 'UYU - Peso Uruguayo'},
             {s: 'Bs.', n: 'BOB - Boliviano'},
             {s: 'Bs.S', n: 'VES - Bolívar (Venezuela)'},
             {s: 'GY$', n: 'GYD - Dólar Guyanés'},
@@ -753,7 +753,7 @@
         ];
 
         let storeData = {
-            name: 'Mi Tienda', logo: '🛒', primaryColor: '#121212', currency: '€',
+            name: 'Mi Tienda', logo: '🛒', primaryColor: '#121212', currency: '€', currencySuffix: '',
             addToCartText: '🛒 Agregar al Carrito', whatsapp: '',
             auth: { passwordHash: null, isAuthenticated: false },
             products: [], categories: ['General'], coupons: [], cart: []
@@ -834,7 +834,7 @@
             if(!list) return;
             list.innerHTML = storeData.coupons.map((c, idx) => `
                 <div class="category-item">
-                    <span><strong>${c.code}</strong> (${c.type === 'percentage' ? c.value + '%' : storeData.currency + formatPrice(c.value)})</span>
+                    <span><strong>${c.code}</strong> (${c.type === 'percentage' ? c.value + '%' : storeData.currency + formatPrice(c.value) + (storeData.currencySuffix || '')})</span>
                     <button onclick="deleteCoupon(${idx})" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
                 </div>
             `).join('');
@@ -887,7 +887,7 @@
         // --- CORE LÓGICA ---
         function populateCurrencies() {
             const select = document.getElementById('currencySymbol');
-            select.innerHTML = currencies.map(c => `<option value="${c.s}">${c.n} (${c.s})</option>`).join('');
+            select.innerHTML = currencies.map(c => `<option value="${c.s}" data-suf="${c.suf || ''}">${c.n}</option>`).join('');
         }
 
         function loadData() {
@@ -1122,7 +1122,6 @@
             tempProductImages = [...(p.images || [])];
             renderImagePreviews();
 
-            // Reparar variantes al editar
             const container = document.getElementById('variantsContainer');
             container.innerHTML = '';
             if (p.variants && p.variants.length > 0) {
@@ -1186,7 +1185,7 @@
                                     <span class="product-category">${cat}</span>
                                     <h3 class="product-name">${p.name}</h3>
                                     <p class="product-description">${p.description || ''}</p>
-                                    <div class="product-price">${storeData.currency}${formatPrice(p.price)}</div>
+                                    <div class="product-price">${storeData.currency}${formatPrice(p.price)}${storeData.currencySuffix || ''}</div>
                                     ${p.variants.map(v => `
                                         <div style="margin-bottom:1rem">
                                             <span style="font-size:0.7rem; font-weight:800; color:#999">${v.name}</span>
@@ -1271,7 +1270,7 @@
                     <div class="cart-item-info">
                         <p class="cart-item-name">${p.name} x${item.quantity}</p>
                         <p class="cart-item-vars">${Object.entries(item.variants).map(([k,v])=>`${k}:${v}`).join(', ')}</p>
-                        <p style="font-weight:700">${storeData.currency}${formatPrice(p.price * item.quantity)}</p>
+                        <p style="font-weight:700">${storeData.currency}${formatPrice(p.price * item.quantity)}${storeData.currencySuffix || ''}</p>
                     </div>
                     <button onclick="removeFromCart(${idx})" style="color:red; border:none; background:none; cursor:pointer">✕</button>
                 </div>`;
@@ -1280,13 +1279,13 @@
             if(appliedCoupon) {
                 if(appliedCoupon.type === 'percentage') discount = subtotal * (appliedCoupon.value / 100);
                 else discount = appliedCoupon.value;
-                document.getElementById('appliedCouponInfo').textContent = `✅ Cupón ${appliedCoupon.code} aplicado (-${storeData.currency}${formatPrice(discount)})`;
+                document.getElementById('appliedCouponInfo').textContent = `✅ Cupón ${appliedCoupon.code} aplicado (-${storeData.currency}${formatPrice(discount)}${storeData.currencySuffix || ''})`;
                 document.getElementById('appliedCouponInfo').style.color = "var(--success)";
             } else { document.getElementById('appliedCouponInfo').textContent = ""; }
             const finalTotal = Math.max(0, subtotal - discount);
-            document.getElementById('subtotalDisplay').innerHTML = `<span>Subtotal:</span><span>${storeData.currency}${formatPrice(subtotal)}</span>`;
-            document.getElementById('discountDisplay').innerHTML = discount > 0 ? `<span>Descuento:</span><span>-${storeData.currency}${formatPrice(discount)}</span>` : "";
-            document.getElementById('total').textContent = storeData.currency + formatPrice(finalTotal);
+            document.getElementById('subtotalDisplay').innerHTML = `<span>Subtotal:</span><span>${storeData.currency}${formatPrice(subtotal)}${storeData.currencySuffix || ''}</span>`;
+            document.getElementById('discountDisplay').innerHTML = discount > 0 ? `<span>Descuento:</span><span>-${storeData.currency}${formatPrice(discount)}${storeData.currencySuffix || ''}</span>` : "";
+            document.getElementById('total').textContent = storeData.currency + formatPrice(finalTotal) + (storeData.currencySuffix || '');
         }
 
         function removeFromCart(idx) { storeData.cart.splice(idx,1); renderCart(); updateCartBadge(); }
@@ -1299,7 +1298,7 @@
             let msg = `🛍️ *PEDIDO: ${storeData.name}*\nCliente: ${name}\nTel: ${phone}\nDirección: ${addr}\n\n`;
             storeData.cart.forEach(i => {
                 const p = storeData.products.find(x => x.id === i.productId);
-                msg += `• ${p.name} x${i.quantity} (${Object.values(i.variants).join('/')}) -> ${storeData.currency}${formatPrice(p.price * i.quantity)}\n`;
+                msg += `• ${p.name} x${i.quantity} (${Object.values(i.variants).join('/')}) -> ${storeData.currency}${formatPrice(p.price * i.quantity)}${storeData.currencySuffix || ''}\n`;
             });
             if(appliedCoupon) msg += `\n🎁 *Cupón:* ${appliedCoupon.code}`;
             msg += `\n\n*TOTAL: ${document.getElementById('total').textContent}*`;
@@ -1339,11 +1338,13 @@
         }
 
         function saveDesign() {
+            const sel = document.getElementById('currencySymbol');
             storeData.name = document.getElementById('storeName').value;
             storeData.whatsapp = document.getElementById('whatsappNumber').value;
             storeData.logo = document.getElementById('storeLogo').value;
             storeData.primaryColor = document.getElementById('primaryColor').value;
-            storeData.currency = document.getElementById('currencySymbol').value;
+            storeData.currency = sel.value;
+            storeData.currencySuffix = sel.options[sel.selectedIndex].dataset.suf || '';
             storeData.addToCartText = document.getElementById('addToCartText').value;
             saveData(); updateDisplay(); showAlert('✅ Diseño guardado', 'success');
         }
