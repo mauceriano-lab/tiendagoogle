@@ -1236,11 +1236,11 @@
                     <h2 style="font-family:'Playfair Display'; font-size:2.5rem; text-align:center; margin-bottom:3rem;">${cat}</h2>
                     <div class="products-grid">
                         ${cats[cat].map(p => {
-                            const isImg = p.image && (typeof p.image === 'string') && (p.image.startsWith('http') || p.image.startsWith('data:image'));
+                            const isImg = p.image && (typeof p.image === 'string') && (p.image.length > 50);
                             return `
                             <article class="product-card">
                                 <div class="product-image ${!isImg ? 'emoji' : ''}">
-                                    ${isImg ? `<img id="main-img-${p.id}" src="${p.image}">` : p.image || '📦'}
+                                    ${isImg ? `<img id="main-img-${p.id}" src="${p.image}" loading="lazy">` : (p.image || '📦')}
                                 </div>
                                 <div class="product-content">
                                     <span class="product-category">${cat}</span>
@@ -1284,7 +1284,7 @@
             el.parentElement.querySelectorAll('.variant-option').forEach(o => o.classList.remove('selected'));
             el.classList.add('selected');
             const varImg = el.dataset.varImg;
-            if (varImg && varImg.startsWith('data:image')) {
+            if (varImg && varImg.length > 50) {
                 const mainImg = document.getElementById(`main-img-${pid}`);
                 if (mainImg) mainImg.src = varImg;
             }
