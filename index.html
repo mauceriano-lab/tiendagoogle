@@ -559,8 +559,9 @@
             </div>
 
             <div class="tab-content" id="categories">
-                <div class="form-group"><label>Nueva Categoría</label><input type="text" id="newCategory"></div>
-                <button class="btn btn-primary" onclick="addCategory()">Crear Categoría</button>
+                <div class="form-group"><label>Nombre Categoría</label><input type="text" id="newCategory" placeholder="Ej: Electrónica"></div>
+                <button class="btn btn-primary" onclick="addCategory()" id="categorySubmitBtn">Crear Categoría</button>
+                <button class="btn btn-secondary hidden" onclick="cancelCategoryEdit()" id="categoryCancelBtn" style="margin-top: 0.5rem;">Cancelar</button>
                 <div id="categoriesList" style="margin-top: 3rem;"></div>
             </div>
 
@@ -616,7 +617,7 @@
 
                 <div style="border: 2px dashed #fecaca; padding: 2rem; border-radius: 20px; background: #fffaf0;">
                     <p style="color: #dc2626; font-weight: 700; margin-bottom: 1rem;">⚠️ ZONA DE PELIGRO</p>
-                    <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.5rem;">Acción irreversible.</p>
+                    <p style="font-size: 0.9rem; color: #7f1d1d; margin-bottom: 1.5rem;">Borrar todos los datos de la tienda permanentemente.</p>
                     <button class="btn btn-danger" onclick="resetData()" style="width: 100%;">🗑️ Borrar Todo el Sistema</button>
                 </div>
             </div>
@@ -677,6 +678,7 @@
 
         let tempProductImages = [];
         let editingProductId = null;
+        let editingCategoryName = null;
         let appliedCoupon = null;
 
         function init() {
@@ -843,12 +845,50 @@
 
         function addCategory() {
             const n = document.getElementById('newCategory').value.trim();
-            if(n && !storeData.categories.includes(n)) { 
-                storeData.categories.push(n); 
-                document.getElementById('newCategory').value = '';
-                saveData(); updateDisplay(); 
-                showAlert('✅ Categoría creada', 'success');
+            if(!n) return;
+            
+            if(editingCategoryName) {
+                // Lógica de actualización
+                const idx = storeData.categories.indexOf(editingCategoryName);
+                if(idx !== -1) {
+                    storeData.categories[idx] = n;
+                    // Actualizar categoría en los productos existentes
+                    storeData.products.forEach(p => {
+                        if(p.category === editingCategoryName) p.category = n;
+                    });
+                    showAlert('✅ Categoría actualizada', 'success');
+                }
+                editingCategoryName = null;
+                document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
+                document.getElementById('categoryCancelBtn').classList.add('hidden');
+            } else {
+                // Lógica de creación
+                if(!storeData.categories.includes(n)) { 
+                    storeData.categories.push(n); 
+                    showAlert('✅ Categoría creada', 'success');
+                } else {
+                    return showAlert('⚠️ Ya existe una categoría con ese nombre', 'info');
+                }
             }
+            
+            document.getElementById('newCategory').value = '';
+            saveData(); updateDisplay(); 
+        }
+
+        function editCategory(name) {
+            editingCategoryName = name;
+            const input = document.getElementById('newCategory');
+            input.value = name;
+            input.focus();
+            document.getElementById('categorySubmitBtn').textContent = '💾 Actualizar Nombre';
+            document.getElementById('categoryCancelBtn').classList.remove('hidden');
+        }
+
+        function cancelCategoryEdit() {
+            editingCategoryName = null;
+            document.getElementById('newCategory').value = '';
+            document.getElementById('categorySubmitBtn').textContent = 'Crear Categoría';
+            document.getElementById('categoryCancelBtn').classList.add('hidden');
         }
 
         function deleteCategory(name) {
@@ -869,7 +909,10 @@
             list.innerHTML = storeData.categories.map(c => `
                 <div class="category-item">
                     <span>${c}</span>
-                    <button onclick="deleteCategory('${c}')" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button onclick="editCategory('${c}')" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:600;">Editar</button>
+                        <button onclick="deleteCategory('${c}')" style="background:none; border:none; color:red; cursor:pointer;">Eliminar</button>
+                    </div>
                 </div>
             `).join('');
         }
