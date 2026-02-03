@@ -141,7 +141,7 @@
             color: var(--white);
         }
 
-        /* Botones Pulidos */
+        /* Botones */
         .btn {
             padding: 0.8rem 1.6rem;
             border: none;
@@ -183,10 +183,6 @@
             color: #dc2626;
         }
 
-        .btn-danger:hover {
-            background: #fecaca;
-        }
-
         .cart-btn {
             position: relative;
             background: var(--primary);
@@ -212,7 +208,6 @@
             padding: 0 5px;
         }
 
-        /* Contenedores */
         .container {
             max-width: 1300px;
             margin: 0 auto;
@@ -425,7 +420,7 @@
             justify-content: center;
         }
 
-        /* Carrito Mejorado */
+        /* Carrito */
         .cart-modal {
             display: none;
             position: fixed;
@@ -507,7 +502,6 @@
 
         .hidden { display: none !important; }
 
-        /* Estilo para el seleccionador de imagen en variantes */
         .variant-img-picker {
             display: flex;
             gap: 10px;
@@ -750,7 +744,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         const currencies = [
-            // América del Norte y Central
             {s: '$', n: 'USD - Dólar (EE.UU., Ecuador, Panamá, El Salvador)'},
             {s: 'C$', n: 'CAD - Dólar Canadiense'},
             {s: '$', n: 'MXN - Peso Mexicano', suf: ' MXN'},
@@ -761,10 +754,6 @@
             {s: 'B/.', n: 'PAB - Balboa (Panamá)'},
             {s: 'RD$', n: 'DOP - Peso Dominicano'},
             {s: 'CUP', n: 'CUP - Peso Cubano'},
-            {s: 'BZ$', n: 'BZD - Dólar Beliceño'},
-            {s: 'HTG', n: 'HTG - Gourde (Haití)'},
-            {s: 'J$', n: 'JMD - Dólar Jamaiquino'},
-            // América del Sur
             {s: '$', n: 'COP - Peso Colombiano', suf: ' COP'},
             {s: 'S/.', n: 'PEN - Sol Peruano'},
             {s: 'R$', n: 'BRL - Real Brasileño'},
@@ -774,9 +763,6 @@
             {s: '$U', n: 'UYU - Peso Uruguayo'},
             {s: 'Bs.', n: 'BOB - Boliviano'},
             {s: 'Bs.S', n: 'VES - Bolívar (Venezuela)'},
-            {s: 'GY$', n: 'GYD - Dólar Guyanés'},
-            {s: 'SRD', n: 'SRD - Dólar Surinamés'},
-            // Europa y Otros
             {s: '€', n: 'EUR - Euro'},
             {s: '£', n: 'GBP - Libra'}
         ];
@@ -805,18 +791,18 @@
             } else { checkAdminAccess(); }
         }
 
-        // --- FORMATEO DE PRECIOS PREMIUM ---
         function formatPrice(value) {
-            return value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function parsePrice(input) {
             if (!input) return 0;
+            // Elimina puntos de miles y cambia coma por punto para el parseo numérico
             let clean = input.toString().replace(/\./g, '').replace(',', '.');
-            return parseFloat(clean) || 0;
+            let num = parseFloat(clean);
+            return isNaN(num) ? 0 : num;
         }
 
-        // --- GESTIÓN DE CATEGORÍAS (UI) ---
         function displayCategoryMenu() {
             const nav = document.getElementById('categoryScroll');
             if(!nav) return;
@@ -835,8 +821,7 @@
             const section = Array.from(document.querySelectorAll('h2')).find(h => h.textContent === name);
             if(section) {
                 const headerOffset = 150;
-                const elementPosition = section.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                const offsetPosition = section.getBoundingClientRect().top + window.pageYOffset - headerOffset;
                 window.scrollTo({ top: offsetPosition, behavior: "smooth" });
                 document.querySelectorAll('.cat-pill').forEach(p => {
                     p.classList.toggle('active', p.textContent === name);
@@ -844,7 +829,6 @@
             }
         }
 
-        // --- GESTIÓN DE CUPONES ---
         function addCoupon() {
             const code = document.getElementById('couponCode').value.trim().toUpperCase();
             const type = document.getElementById('couponType').value;
@@ -889,7 +873,6 @@
             renderCart();
         }
 
-        // --- SEGURIDAD ---
         async function changeAdminPassword() {
             const oldPass = document.getElementById('oldPassword').value;
             const newPass1 = document.getElementById('newPassword1').value;
@@ -913,7 +896,6 @@
             return Array.from(new Uint8Array(h)).map(x => x.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- CORE LÓGICA ---
         function populateCurrencies() {
             const select = document.getElementById('currencySymbol');
             select.innerHTML = currencies.map(c => `<option value="${c.s}" data-suf="${c.suf || ''}">${c.n}</option>`).join('');
@@ -935,7 +917,14 @@
             } catch (e) {}
         }
 
-        function saveData() { localStorage.setItem('storeData', JSON.stringify(storeData)); }
+        function saveData() { 
+            try {
+                localStorage.setItem('storeData', JSON.stringify(storeData)); 
+            } catch(e) {
+                showAlert('⚠️ Espacio insuficiente para guardar más datos', 'info');
+            }
+        }
+        
         function updateColors() { document.documentElement.style.setProperty('--primary', storeData.primaryColor); }
         
         function updateDisplay() {
@@ -962,7 +951,6 @@
             }, 3000);
         }
 
-        // --- PRODUCTOS ---
         function setupImagePreview() {
             const fileInput = document.getElementById('productImageFile');
             fileInput.addEventListener('change', function(e) {
@@ -987,8 +975,7 @@
             `).join('');
 
             document.querySelectorAll('.variant-img-picker').forEach(picker => {
-                const id = picker.dataset.groupId;
-                updateVariantImgPicker(id);
+                updateVariantImgPicker(picker.dataset.groupId);
             });
         }
 
@@ -1020,7 +1007,7 @@
                     storeData.categories.push(n); 
                     showAlert('✅ Categoría creada', 'success');
                 } else {
-                    return showAlert('⚠️ Ya existe una categoría con ese nombre', 'info');
+                    return showAlert('⚠️ Ya existe esta categoría', 'info');
                 }
             }
             document.getElementById('newCategory').value = '';
@@ -1073,7 +1060,7 @@
         }
 
         function addVariantGroup() {
-            const id = Date.now();
+            const id = Math.floor(Date.now() + Math.random() * 1000);
             const div = document.createElement('div');
             div.className = 'variant-builder';
             div.style.cssText = 'background:#f8f8f8; padding:1.5rem; border-radius:20px; margin-bottom:1.5rem; border:1px solid #eee;';
@@ -1083,7 +1070,7 @@
                 <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
                 <div style="display:grid; gap:0.5rem;">
                     <input type="text" placeholder="Opción" class="v-opt-in">
-                    <label style="font-size:0.7rem; margin-top: 5px;">Asignar imagen de este producto a esta opción:</label>
+                    <label style="font-size:0.7rem; margin-top: 5px;">Asignar imagen:</label>
                     <div class="variant-img-picker" data-group-id="${id}"></div>
                     <button class="btn btn-secondary" onclick="addVariantOption(${id})">Añadir Opción</button>
                 </div>
@@ -1098,7 +1085,7 @@
             if(!picker) return;
             picker.innerHTML = tempProductImages.map((src, idx) => `
                 <img src="${src}" onclick="selectImageForVariant(this)" data-src="${src}">
-            `).join('') || '<p style="font-size:0.7rem; color:#999;">Sube imágenes arriba primero</p>';
+            `).join('') || '<p style="font-size:0.7rem; color:#999;">Sube imágenes primero</p>';
         }
 
         function selectImageForVariant(el) {
@@ -1126,7 +1113,11 @@
         function addProduct() {
             const name = document.getElementById('productName').value;
             const price = parsePrice(document.getElementById('productPrice').value);
-            if(!name || price <= 0) return showAlert('⚠️ Faltan datos o precio inválido', 'info');
+            const category = document.getElementById('productCategory').value || 'General';
+            const description = document.getElementById('productDescription').value;
+
+            if(!name || price <= 0) return showAlert('⚠️ Revisa el nombre y el precio', 'info');
+
             const variants = [];
             document.querySelectorAll('.variant-builder').forEach(g => {
                 const vName = g.querySelector('.v-name').value;
@@ -1136,21 +1127,29 @@
                 }));
                 if(vName && opts.length) variants.push({ name: vName, options: opts });
             });
+
             const newProduct = {
                 id: editingProductId || Date.now(),
-                name, category: document.getElementById('productCategory').value,
-                description: document.getElementById('productDescription').value,
-                price, image: tempProductImages[0] || '📦', images: [...tempProductImages], variants
+                name, category, description, price, 
+                image: tempProductImages[0] || '📦', 
+                images: [...tempProductImages], 
+                variants
             };
+
             if(editingProductId) {
                 const idx = storeData.products.findIndex(p => p.id === editingProductId);
-                storeData.products[idx] = newProduct;
+                if(idx !== -1) storeData.products[idx] = newProduct;
                 editingProductId = null;
                 document.getElementById('productSubmitBtn').textContent = '➕ Publicar Producto';
                 document.getElementById('cancelEditBtn').classList.add('hidden');
-            } else { storeData.products.push(newProduct); }
-            saveData(); updateDisplay(); resetProductForm();
-            showAlert('✅ Producto guardado', 'success');
+            } else { 
+                storeData.products.push(newProduct); 
+            }
+
+            saveData(); 
+            updateDisplay(); 
+            resetProductForm();
+            showAlert('✅ Publicado correctamente', 'success');
         }
 
         function resetProductForm() {
@@ -1182,34 +1181,31 @@
 
             const container = document.getElementById('variantsContainer');
             container.innerHTML = '';
-            if (p.variants && p.variants.length > 0) {
-                p.variants.forEach(v => {
-                    const gid = Date.now() + Math.random();
-                    const div = document.createElement('div');
-                    div.className = 'variant-builder';
-                    div.style.cssText = 'background:#f8f8f8; padding:1.5rem; border-radius:20px; margin-bottom:1.5rem; border:1px solid #eee;';
-                    div.id = `v-group-${gid}`;
-                    div.innerHTML = `
-                        <input type="text" placeholder="Ej: Talla o Color" class="v-name" value="${v.name}" style="margin-bottom:1rem">
-                        <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
-                            ${v.options.map(o => `
-                                <div data-img="${o.image || ''}" style="background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;">
-                                    <span>${o.text}</span> ${o.image ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div style="display:grid; gap:0.5rem;">
-                            <input type="text" placeholder="Opción" class="v-opt-in">
-                            <label style="font-size:0.7rem; margin-top: 5px;">Asignar imagen de este producto a esta opción:</label>
-                            <div class="variant-img-picker" data-group-id="${gid}"></div>
-                            <button class="btn btn-secondary" onclick="addVariantOption(${gid})">Añadir Opción</button>
-                        </div>
-                        <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
-                    `;
-                    container.appendChild(div);
-                    updateVariantImgPicker(gid);
-                });
-            }
+            (p.variants || []).forEach(v => {
+                const gid = Math.floor(Date.now() + Math.random() * 1000);
+                const div = document.createElement('div');
+                div.className = 'variant-builder';
+                div.style.cssText = 'background:#f8f8f8; padding:1.5rem; border-radius:20px; margin-bottom:1.5rem; border:1px solid #eee;';
+                div.id = `v-group-${gid}`;
+                div.innerHTML = `
+                    <input type="text" placeholder="Ej: Talla" class="v-name" value="${v.name}" style="margin-bottom:1rem">
+                    <div class="v-options-list" style="margin-bottom:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
+                        ${v.options.map(o => `
+                            <div data-img="${o.image || ''}" style="background:white; border:1px solid #ddd; padding:0.5rem 1rem; border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                <span>${o.text}</span> ${o.image ? '🖼️' : ''} <button onclick="this.parentElement.remove()" style="border:none; background:none; cursor:pointer;">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display:grid; gap:0.5rem;">
+                        <input type="text" placeholder="Opción" class="v-opt-in">
+                        <div class="variant-img-picker" data-group-id="${gid}"></div>
+                        <button class="btn btn-secondary" onclick="addVariantOption(${gid})">Añadir Opción</button>
+                    </div>
+                    <button onclick="this.parentElement.remove()" style="margin-top:1rem; color:red; border:none; background:none; cursor:pointer">Eliminar Grupo</button>
+                `;
+                container.appendChild(div);
+                updateVariantImgPicker(gid);
+            });
 
             document.getElementById('productSubmitBtn').textContent = '💾 Guardar Cambios';
             document.getElementById('cancelEditBtn').classList.remove('hidden');
@@ -1223,12 +1219,16 @@
             document.getElementById('cancelEditBtn').classList.add('hidden');
         }
 
-        // --- TIENDA Y CARRITO ---
         function displayProducts() {
             const display = document.getElementById('productsDisplay');
-            if(!storeData.products.length) return display.innerHTML = '<div style="text-align:center; padding:4rem; color:#999;">Catálogo vacío</div>';
+            if(!storeData.products || !storeData.products.length) return display.innerHTML = '<div style="text-align:center; padding:4rem; color:#999;">Catálogo vacío</div>';
+            
             const cats = {};
-            storeData.products.forEach(p => { if(!cats[p.category]) cats[p.category] = []; cats[p.category].push(p); });
+            storeData.products.forEach(p => { 
+                const catName = p.category || 'General';
+                if(!cats[catName]) cats[catName] = []; 
+                cats[catName].push(p); 
+            });
             const isAdmin = sessionStorage.getItem('adminAuthenticated') === 'true';
 
             display.innerHTML = Object.keys(cats).map(cat => `
@@ -1247,17 +1247,14 @@
                                     <h3 class="product-name">${p.name}</h3>
                                     <p class="product-description">${p.description || ''}</p>
                                     <div class="product-price">${storeData.currency}${formatPrice(p.price)}${storeData.currencySuffix || ''}</div>
-                                    ${p.variants.map(v => `
+                                    ${(p.variants || []).map(v => `
                                         <div style="margin-bottom:1rem">
                                             <span style="font-size:0.7rem; font-weight:800; color:#999">${v.name}</span>
                                             <div class="variant-options">
-                                                ${v.options.map((o, idx) => {
-                                                    const varImgStr = o.image ? o.image.replace(/'/g, "\\'") : '';
-                                                    return `
+                                                ${(v.options || []).map((o, idx) => `
                                                     <div class="variant-option ${idx === 0 ? 'selected' : ''}" 
-                                                         data-var-img="${varImgStr}"
-                                                         onclick="selectVarOption(this, ${p.id})">${o.text}</div>`;
-                                                }).join('')}
+                                                         data-var-img="${o.image ? o.image.replace(/'/g, "\\'") : ''}"
+                                                         onclick="selectVarOption(this, ${p.id})">${o.text}</div>`).join('')}
                                             </div>
                                         </div>`).join('')}
                                     <div class="quantity-selector">
@@ -1292,6 +1289,7 @@
 
         function changeQty(pid, val) {
             const el = document.getElementById(`qty-${pid}`);
+            if(!el) return;
             let q = parseInt(el.textContent) + val;
             if(q < 1) q = 1;
             el.textContent = q;
@@ -1299,6 +1297,7 @@
 
         function addToCart(pid) {
             const p = storeData.products.find(x => x.id === pid);
+            if(!p) return;
             const qty = parseInt(document.getElementById(`qty-${pid}`).textContent);
             const vars = {};
             document.querySelectorAll(`.product-card`).forEach(card => {
@@ -1336,6 +1335,7 @@
             let subtotal = 0;
             cont.innerHTML = storeData.cart.map((item, idx) => {
                 const p = storeData.products.find(x => x.id === item.productId);
+                if(!p) return '';
                 subtotal += p.price * item.quantity;
                 return `<div class="cart-item">
                     <div class="cart-item-info">
@@ -1346,6 +1346,7 @@
                     <button onclick="removeFromCart(${idx})" style="color:red; border:none; background:none; cursor:pointer">✕</button>
                 </div>`;
             }).join('');
+            
             let discount = 0;
             if(appliedCoupon) {
                 if(appliedCoupon.type === 'percentage') discount = subtotal * (appliedCoupon.value / 100);
@@ -1353,6 +1354,7 @@
                 document.getElementById('appliedCouponInfo').textContent = `✅ Cupón ${appliedCoupon.code} aplicado (-${storeData.currency}${formatPrice(discount)}${storeData.currencySuffix || ''})`;
                 document.getElementById('appliedCouponInfo').style.color = "var(--success)";
             } else { document.getElementById('appliedCouponInfo').textContent = ""; }
+            
             const finalTotal = Math.max(0, subtotal - discount);
             document.getElementById('subtotalDisplay').innerHTML = `<span>Subtotal:</span><span>${storeData.currency}${formatPrice(subtotal)}${storeData.currencySuffix || ''}</span>`;
             document.getElementById('discountDisplay').innerHTML = discount > 0 ? `<span>Descuento:</span><span>-${storeData.currency}${formatPrice(discount)}${storeData.currencySuffix || ''}</span>` : "";
@@ -1366,6 +1368,7 @@
             const addr = document.getElementById('customerAddress').value;
             const phone = document.getElementById('customerPhone').value;
             if(!name || !addr || !phone) return showAlert('⚠️ Faltan datos de envío', 'info');
+            
             let msg = `🛍️ *PEDIDO: ${storeData.name}*\nCliente: ${name}\nTel: ${phone}\nDirección: ${addr}\n\n`;
             storeData.cart.forEach(i => {
                 const p = storeData.products.find(x => x.id === i.productId);
@@ -1376,7 +1379,6 @@
             window.open(`https://wa.me/${storeData.whatsapp.replace(/\+/g,'')}?text=${encodeURIComponent(msg)}`);
         }
 
-        // --- LOGIN ---
         async function attemptLogin() {
             const h = await hashPassword(document.getElementById('loginPassword').value);
             if(h === storeData.auth.passwordHash) {
@@ -1415,7 +1417,7 @@
             storeData.logo = document.getElementById('storeLogo').value;
             storeData.primaryColor = document.getElementById('primaryColor').value;
             storeData.currency = sel.value;
-            storeData.currencySuffix = sel.options[sel.selectedIndex].dataset.suf || '';
+            storeData.currencySuffix = sel.options[sel.selectedIndex]?.dataset.suf || '';
             storeData.addToCartText = document.getElementById('addToCartText').value;
             saveData(); updateDisplay(); showAlert('✅ Diseño guardado', 'success');
         }
@@ -1431,9 +1433,11 @@
         }
 
         function generateShareLink() {
-            const url = window.location.origin + window.location.pathname + '?shop=customer';
-            document.getElementById('shareLink').value = url;
-            new QRCode(document.getElementById('qrcode'), { text: url, width: 200, height: 200 });
+            try {
+                const url = window.location.origin + window.location.pathname + '?shop=customer';
+                document.getElementById('shareLink').value = url;
+                new QRCode(document.getElementById('qrcode'), { text: url, width: 200, height: 200 });
+            } catch(e) {}
         }
 
         function copyLink() {
